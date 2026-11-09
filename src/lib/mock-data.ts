@@ -244,6 +244,19 @@ export function filterTransactions(
   });
 }
 
+export function accumulateRevenue(
+  currentKpiValue: string,
+  newAmount: number
+): string {
+  // Strip formatting to parse raw number
+  const numericVal = parseFloat(currentKpiValue.replace(/[^0-9.]+/g, "")) || 0;
+  const updated = numericVal + newAmount;
+  return `$${updated.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export function sortTransactions(
   transactions: Transaction[],
   field: keyof Transaction,

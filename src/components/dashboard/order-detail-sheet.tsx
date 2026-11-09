@@ -33,9 +33,6 @@ export function OrderDetailSheet({
 
   const handleStatusChange = (newStatus: TransactionStatus) => {
     onStatusUpdate(transaction.id, newStatus);
-    toast.success(`Order ${transaction.id} updated`, {
-      description: `Status changed to ${newStatus.toUpperCase()}`,
-    });
   };
 
   const handleDownloadInvoice = () => {

@@ -11,13 +11,14 @@ import { OrdersTable } from "@/components/dashboard/orders-table";
 import { OrderDetailSheet } from "@/components/dashboard/order-detail-sheet";
 import { CreateOrderDialog } from "@/components/dashboard/create-order-dialog";
 import { CommandPalette } from "@/components/dashboard/command-palette";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import {
   INITIAL_KPIS,
   INITIAL_TRANSACTIONS,
   Transaction,
   TransactionStatus,
   KpiMetric,
+  accumulateRevenue,
 } from "@/lib/mock-data";
 import { toast } from "sonner";
 
@@ -48,18 +49,13 @@ export default function DashboardPage() {
   const handleCreateOrder = (newOrder: Transaction) => {
     setTransactions((prev) => [newOrder, ...prev]);
 
-    // Dynamically update total revenue KPI
+    // Dynamically update total revenue KPI cumulatively
     setKpis((prev) =>
       prev.map((kpi) => {
         if (kpi.id === "kpi-revenue") {
-          const currentTotal = 45231.89;
-          const newTotal = currentTotal + newOrder.amount;
           return {
             ...kpi,
-            value: `$${newTotal.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`,
+            value: accumulateRevenue(kpi.value, newOrder.amount),
           };
         }
         return kpi;
@@ -84,7 +80,11 @@ export default function DashboardPage() {
       <div className="hidden md:block">
         <Sidebar
           activeSection={activeSection}
-          onSelectSection={setActiveSection}
+          onSelectSection={(section) => {
+            setActiveSection(section);
+            const el = document.getElementById(section);
+            if (el) el.scrollIntoView({ behavior: "smooth" });
+          }}
           className="fixed inset-y-0 left-0 z-40"
         />
       </div>
@@ -92,9 +92,15 @@ export default function DashboardPage() {
       {/* Mobile Drawer Sidebar */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent side="left" className="p-0 w-72">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+          <SheetDescription className="sr-only">Mobile sidebar navigation menu</SheetDescription>
           <Sidebar
             activeSection={activeSection}
-            onSelectSection={setActiveSection}
+            onSelectSection={(section) => {
+              setActiveSection(section);
+              const el = document.getElementById(section);
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
             onCloseMobile={() => setMobileSidebarOpen(false)}
             className="w-full border-r-0"
           />
