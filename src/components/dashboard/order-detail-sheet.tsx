@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, RefreshCcw, Download, Calendar, CreditCard, Tag } from "lucide-react";
+import { CheckCircle2, RefreshCcw, Download, Calendar, CreditCard, Tag, Printer, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -15,13 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Transaction, TransactionStatus } from "@/lib/mock-data";
-import { openPrintableInvoice } from "@/lib/export-utils";
 
 export interface OrderDetailSheetProps {
   transaction: Transaction | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusUpdate: (id: string, newStatus: TransactionStatus) => void;
+  onViewInvoice?: (transaction: Transaction) => void;
 }
 
 export function OrderDetailSheet({
@@ -29,6 +29,7 @@ export function OrderDetailSheet({
   open,
   onOpenChange,
   onStatusUpdate,
+  onViewInvoice,
 }: OrderDetailSheetProps) {
   if (!transaction) return null;
 
@@ -36,11 +37,10 @@ export function OrderDetailSheet({
     onStatusUpdate(transaction.id, newStatus);
   };
 
-  const handleDownloadInvoice = () => {
-    openPrintableInvoice(transaction);
-    toast.success(`Invoice generated for ${transaction.id}`, {
-      description: `Official invoice opened for print or PDF download`,
-    });
+  const handleOpenInvoice = () => {
+    if (onViewInvoice) {
+      onViewInvoice(transaction);
+    }
   };
 
   return (
@@ -77,7 +77,7 @@ export function OrderDetailSheet({
             </span>
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
-                <AvatarFallback>{transaction.customer.avatar}</AvatarFallback>
+                <AvatarFallback>{transaction.customer.avatar || transaction.customer.name.slice(0, 2)}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
                 <span className="text-sm font-semibold">{transaction.customer.name}</span>
@@ -139,14 +139,16 @@ export function OrderDetailSheet({
 
         {/* Footer Actions */}
         <SheetFooter className="border-t pt-4 flex-col sm:flex-col gap-2">
-          <Button
-            variant="outline"
-            onClick={handleDownloadInvoice}
-            className="w-full gap-2 text-xs"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Download PDF Invoice
-          </Button>
+          {onViewInvoice && (
+            <Button
+              variant="outline"
+              onClick={handleOpenInvoice}
+              className="w-full gap-2 text-xs shadow-sm"
+            >
+              <Printer className="h-3.5 w-3.5 text-primary" />
+              View Commercial Tax Invoice
+            </Button>
+          )}
 
           <div className="grid grid-cols-2 gap-2 w-full">
             {transaction.status !== "paid" && (
@@ -168,7 +170,7 @@ export function OrderDetailSheet({
                 className="gap-1.5 text-xs"
               >
                 <RefreshCcw className="h-3.5 w-3.5" />
-                Refund
+                Mark Refunded
               </Button>
             )}
           </div>

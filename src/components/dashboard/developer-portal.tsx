@@ -13,7 +13,9 @@ import {
   AlertTriangle,
   ExternalLink,
   Lock,
-  Layers,
+  Radio,
+  Send,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ApiKeyRecord, ApiScope } from "@/lib/api-gateway";
+import { WebhookRecord, WebhookEvent, generateWebhookSecret, validateWebhookInput } from "@/lib/webhooks";
 
 export interface DeveloperPortalProps {
   apiKeys: ApiKeyRecord[];
@@ -43,6 +46,10 @@ export interface DeveloperPortalProps {
     keyRecord: ApiKeyRecord;
   };
   onRevokeKey: (id: string) => void;
+  webhooks?: WebhookRecord[];
+  onAddWebhook?: (webhook: Omit<WebhookRecord, "id" | "createdAt" | "active">) => void;
+  onDeleteWebhook?: (id: string) => void;
+  onTestWebhook?: (id: string) => void;
 }
 
 export function validateApiKeyInput(input: {
@@ -76,10 +83,21 @@ const AVAILABLE_SCOPES: { id: ApiScope; label: string; desc: string }[] = [
   },
 ];
 
+const AVAILABLE_WEBHOOK_EVENTS: { id: WebhookEvent; label: string }[] = [
+  { id: "order.created", label: "order.created - Dispatched when a new order is received" },
+  { id: "order.paid", label: "order.paid - Dispatched when a payment settles successfully" },
+  { id: "order.failed", label: "order.failed - Dispatched when payment fails or is rejected" },
+  { id: "order.deleted", label: "order.deleted - Dispatched when an administrator removes a record" },
+];
+
 export function DeveloperPortal({
   apiKeys,
   onGenerateKey,
   onRevokeKey,
+  webhooks = [],
+  onAddWebhook,
+  onDeleteWebhook,
+  onTestWebhook,
 }: DeveloperPortalProps) {
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [keyName, setKeyName] = React.useState("");
@@ -90,11 +108,25 @@ export function DeveloperPortal({
   const [hasCopied, setHasCopied] = React.useState(false);
   const [codeTab, setCodeTab] = React.useState<"curl" | "node">("curl");
 
+  // Webhook state
+  const [isWebhookOpen, setIsWebhookOpen] = React.useState(false);
+  const [webhookName, setWebhookName] = React.useState("");
+  const [webhookUrl, setWebhookUrl] = React.useState("");
+  const [webhookEvents, setWebhookEvents] = React.useState<WebhookEvent[]>(["order.created", "order.paid"]);
+
   const toggleScope = (scope: ApiScope) => {
     if (selectedScopes.includes(scope)) {
       setSelectedScopes(selectedScopes.filter((s) => s !== scope));
     } else {
       setSelectedScopes([...selectedScopes, scope]);
+    }
+  };
+
+  const toggleWebhookEvent = (ev: WebhookEvent) => {
+    if (webhookEvents.includes(ev)) {
+      setWebhookEvents(webhookEvents.filter((e) => e !== ev));
+    } else {
+      setWebhookEvents([...webhookEvents, ev]);
     }
   };
 
@@ -115,6 +147,33 @@ export function DeveloperPortal({
     setKeyName("");
     setSelectedScopes(["read:orders"]);
     toast.success("Live API key generated successfully.");
+  };
+
+  const handleCreateWebhook = (e: React.FormEvent) => {
+    e.preventDefault();
+    const validation = validateWebhookInput({
+      name: webhookName,
+      url: webhookUrl,
+      events: webhookEvents,
+    });
+
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return;
+    }
+
+    if (onAddWebhook) {
+      onAddWebhook({
+        name: webhookName.trim(),
+        url: webhookUrl.trim(),
+        events: webhookEvents,
+        secretKey: generateWebhookSecret(),
+      });
+      setIsWebhookOpen(false);
+      setWebhookName("");
+      setWebhookUrl("");
+      toast.success("Webhook endpoint registered successfully.");
+    }
   };
 
   const copySecret = () => {
@@ -140,13 +199,23 @@ export function DeveloperPortal({
             Developer Gateway & API Keys
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage live production tokens, configure granular RBAC scopes, and integrate Fixentra REST APIs.
+            Manage live production tokens, configure webhooks, and integrate Fixentra REST APIs.
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="gap-2 shrink-0">
-          <Plus className="h-4 w-4" />
-          Generate New API Key
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={() => setIsWebhookOpen(true)}
+            className="gap-2 shrink-0 text-xs"
+          >
+            <Radio className="h-3.5 w-3.5 text-primary" />
+            Add Webhook
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)} className="gap-2 shrink-0 text-xs">
+            <Plus className="h-4 w-4" />
+            Generate New API Key
+          </Button>
+        </div>
       </div>
 
       {/* API Key Metrics and Overview */}
@@ -176,20 +245,20 @@ export function DeveloperPortal({
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground">
-              fixentra.my.id/api/v1/health &bull; 99.99% uptime
+              fixentra.my.id/api/v1/health &bull; Rate Limiter Active
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="text-xs">Authentication Type</CardDescription>
-            <CardTitle className="text-2xl font-bold">Bearer Token</CardTitle>
+            <CardDescription className="text-xs">Registered Webhooks</CardDescription>
+            <CardTitle className="text-2xl font-bold">{webhooks.length}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-primary" />
-              Prefix: <code className="text-[11px] font-mono">fix_live_</code>
+              <Zap className="h-3.5 w-3.5 text-amber-500" />
+              HMAC-SHA256 signature verification
             </p>
           </CardContent>
         </Card>
@@ -280,6 +349,109 @@ export function DeveloperPortal({
         </CardContent>
       </Card>
 
+      {/* Webhooks Section */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <div>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Radio className="h-4 w-4 text-primary" />
+              Realtime Webhook Subscriptions
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Fixentra dispatches signed POST requests with HMAC-SHA256 headers when transactional events occur.
+            </CardDescription>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setIsWebhookOpen(true)}
+            className="text-xs gap-1.5"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Endpoint
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {webhooks.length === 0 ? (
+            <div className="py-8 text-center text-xs text-muted-foreground">
+              <Radio className="mx-auto h-6 w-6 text-muted-foreground/40 mb-1.5" />
+              <p>No webhooks configured yet.</p>
+              <p className="text-[11px] mt-0.5">Subscribe external ERP or Slack systems to order events.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b text-muted-foreground">
+                    <th className="pb-2.5 font-medium">Name</th>
+                    <th className="pb-2.5 font-medium">Target URL</th>
+                    <th className="pb-2.5 font-medium">Events</th>
+                    <th className="pb-2.5 font-medium">Signing Secret</th>
+                    <th className="pb-2.5 font-medium">Last Delivery</th>
+                    <th className="pb-2.5 font-medium text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y text-xs">
+                  {webhooks.map((wh) => (
+                    <tr key={wh.id} className="hover:bg-muted/50 transition-colors">
+                      <td className="py-3 font-semibold text-foreground">{wh.name}</td>
+                      <td className="py-3 font-mono text-[11px] text-muted-foreground">{wh.url}</td>
+                      <td className="py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {wh.events.map((ev) => (
+                            <Badge key={ev} variant="outline" className="text-[10px] font-mono px-1 py-0">
+                              {ev}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3 font-mono text-[11px] text-muted-foreground">
+                        {wh.secretKey.slice(0, 10)}...••••
+                      </td>
+                      <td className="py-3">
+                        {wh.lastDeliveredAt ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            {wh.lastStatusCode || 200} OK &bull; {wh.lastDeliveredAt}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-[11px]">Pending event</span>
+                        )}
+                      </td>
+                      <td className="py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {onTestWebhook && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onTestWebhook(wh.id)}
+                              className="h-7 px-2 text-[11px] gap-1"
+                            >
+                              <Send className="h-3 w-3 text-primary" />
+                              Test Ping
+                            </Button>
+                          )}
+                          {onDeleteWebhook && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onDeleteWebhook(wh.id)}
+                              className="h-7 px-2 text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Quick Integration Guide & Code Snippets */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -318,27 +490,36 @@ export function DeveloperPortal({
         <CardContent>
           {codeTab === "curl" ? (
             <div className="rounded-lg bg-zinc-950 p-4 font-mono text-xs text-zinc-100 overflow-x-auto border border-zinc-800">
-              <div className="text-zinc-500 mb-2"># 1. Check Gateway Health</div>
+              <div className="text-zinc-500 mb-2"># 1. Check Gateway Health & Rate Limits</div>
               <div className="text-emerald-400 mb-3">
-                curl -X GET https://fixentra.my.id/api/v1/health
+                curl -i -X GET https://fixentra.my.id/api/v1/health
               </div>
-              <div className="text-zinc-500 mb-2"># 2. Query Live Orders (Requires read:orders scope)</div>
+              <div className="text-zinc-500 mb-2"># 2. Ingest New Order (Protected by write:orders scope)</div>
               <div className="text-blue-400">
-                curl -X GET https://fixentra.my.id/api/v1/orders \<br />
-                &nbsp;&nbsp;-H &quot;Authorization: Bearer {sampleKeyDisplay}&quot;
+                curl -X POST https://fixentra.my.id/api/v1/orders \<br />
+                &nbsp;&nbsp;-H &quot;Authorization: Bearer {sampleKeyDisplay}&quot; \<br />
+                &nbsp;&nbsp;-H &quot;Content-Type: application/json&quot; \<br />
+                &nbsp;&nbsp;-d &apos;&#123;&quot;customerName&quot;: &quot;Apex Labs&quot;, &quot;customerEmail&quot;: &quot;ops@apex.io&quot;, &quot;amount&quot;: 350.00&#125;&apos;
               </div>
             </div>
           ) : (
             <div className="rounded-lg bg-zinc-950 p-4 font-mono text-xs text-zinc-100 overflow-x-auto border border-zinc-800">
               <pre className="text-zinc-300">
 {`const response = await fetch("https://fixentra.my.id/api/v1/orders", {
+  method: "POST",
   headers: {
     "Authorization": "Bearer ${sampleKeyDisplay}",
     "Content-Type": "application/json"
-  }
+  },
+  body: JSON.stringify({
+    customerName: "Apex Labs",
+    customerEmail: "ops@apex.io",
+    amount: 350.00,
+    status: "Paid"
+  })
 });
-const { data, meta } = await response.json();
-console.log("Orders retrieved:", meta.total);`}
+const data = await response.json();
+console.log("Order created:", data);`}
               </pre>
             </div>
           )}
@@ -415,7 +596,78 @@ console.log("Orders retrieved:", meta.total);`}
         </DialogContent>
       </Dialog>
 
-      {/* Reveal Secret Key Dialog (Review Focus #3) */}
+      {/* Webhook Creation Modal Dialog */}
+      <Dialog open={isWebhookOpen} onOpenChange={setIsWebhookOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Webhook Subscription</DialogTitle>
+            <DialogDescription className="text-xs">
+              Receive automated event updates delivered with HMAC-SHA256 signature headers.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateWebhook} className="space-y-3.5 pt-2">
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Integration Name</label>
+              <Input
+                placeholder="e.g. Slack Financial Alerts, NetSuite Sync"
+                value={webhookName}
+                onChange={(e) => setWebhookName(e.target.value)}
+                required
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Destination URL (HTTP/HTTPS)</label>
+              <Input
+                type="url"
+                placeholder="https://api.example.com/webhooks/orders"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                required
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium">Subscribed Events</label>
+              <div className="space-y-1.5">
+                {AVAILABLE_WEBHOOK_EVENTS.map((item) => (
+                  <label
+                    key={item.id}
+                    className="flex items-center gap-2 rounded border p-2 text-xs cursor-pointer hover:bg-muted/50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={webhookEvents.includes(item.id)}
+                      onChange={() => toggleWebhookEvent(item.id)}
+                      className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="font-mono text-[11px]">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsWebhookOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" size="sm">
+                Save Webhook
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reveal Secret Key Dialog */}
       <Dialog
         open={!!createdSecret}
         onOpenChange={(open) => {

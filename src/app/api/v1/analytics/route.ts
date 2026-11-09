@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiKey } from "@/lib/api-gateway";
 import { prisma, ensureDatabaseSeeded } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 export async function GET(req: NextRequest) {
   await ensureDatabaseSeeded();
+
+  // Rate Limiting
+  const clientIp = req.headers.get("x-forwarded-for") || "client-local";
+  const rateLimit = checkRateLimit(`analytics-get-${clientIp}`, 60, 60000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too Many Requests. Rate limit exceeded.", retryAfter: rateLimit.retryAfterSeconds },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+    );
+  }
 
   const auth = await authenticateApiKey(req.headers.get("authorization"), "read:analytics");
   if (!auth.valid) {
@@ -30,20 +41,28 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      data: {
-        totalRevenue,
-        totalOrders,
-        paidCount,
-        pendingCount,
-        failedCount,
-        averageOrderValue: totalOrders > 0 ? totalRevenue / (paidCount || 1) : 0,
+    return NextResponse.json(
+      {
+        data: {
+          totalRevenue,
+          totalOrders,
+          paidCount,
+          pendingCount,
+          failedCount,
+          averageOrderValue: totalOrders > 0 ? totalRevenue / (paidCount || 1) : 0,
+        },
+        meta: {
+          queriedBy: auth.apiKey?.name,
+          timestamp: new Date().toISOString(),
+          rateLimitRemaining: rateLimit.remaining,
+        },
       },
-      meta: {
-        queriedBy: auth.apiKey?.name,
-        timestamp: new Date().toISOString(),
-      },
-    });
+      {
+        headers: {
+          "X-RateLimit-Remaining": String(rateLimit.remaining),
+        },
+      }
+    );
   } catch (err) {
     console.error("GET /api/v1/analytics error:", err);
     return NextResponse.json({ error: "Failed to generate analytics" }, { status: 500 });

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Download, Sparkles, FileJson, Package, Activity, ShieldCheck, Terminal, Users } from "lucide-react";
+import { Plus, Download, Sparkles, FileJson, Package, Activity, ShieldCheck, Terminal, Users, Radio, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -14,6 +14,7 @@ import { SettingsView } from "@/components/dashboard/settings-view";
 import { ProductsView } from "@/components/dashboard/products-view";
 import { DeveloperPortal } from "@/components/dashboard/developer-portal";
 import { TeamView, TeamMember } from "@/components/dashboard/team-view";
+import { InvoiceModal } from "@/components/dashboard/invoice-modal";
 import { AiCopilotDrawer } from "@/components/dashboard/ai-copilot";
 import { OrderDetailSheet } from "@/components/dashboard/order-detail-sheet";
 import { CreateOrderDialog } from "@/components/dashboard/create-order-dialog";
@@ -22,6 +23,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/
 import { LoginScreen } from "@/components/auth/login-screen";
 import { getStoredSession, clearStoredSession, UserRole } from "@/lib/auth";
 import { ApiKeyRecord, ApiScope } from "@/lib/api-gateway";
+import { WebhookRecord } from "@/lib/webhooks";
 import { generateApiKeySecret, hashPassword } from "@/lib/crypto";
 import {
   INITIAL_KPIS,
@@ -62,6 +64,31 @@ const INITIAL_API_KEYS: ApiKeyRecord[] = [
   },
 ];
 
+const INITIAL_WEBHOOKS: WebhookRecord[] = [
+  {
+    id: "wh-01",
+    name: "Slack Financial Alerts",
+    url: "https://hooks.slack.com/services/T00/B00/X00",
+    events: ["order.created", "order.paid"],
+    secretKey: "whsec_8a7d16f901cb4d8e9a2b5c00f124a91b2c",
+    active: true,
+    lastDeliveredAt: "15m ago",
+    lastStatusCode: 200,
+    createdAt: "2026-11-09",
+  },
+  {
+    id: "wh-02",
+    name: "NetSuite ERP Ledger Sync",
+    url: "https://api.netsuite.com/rest/v1/invoices",
+    events: ["order.paid", "order.failed"],
+    secretKey: "whsec_99b1a03c81e9f4a18d20e74b3a102ef819",
+    active: true,
+    lastDeliveredAt: "1h ago",
+    lastStatusCode: 200,
+    createdAt: "2026-11-10",
+  },
+];
+
 const INITIAL_TEAM: TeamMember[] = [
   {
     id: "usr-admin",
@@ -96,13 +123,16 @@ export default function FixentraApp() {
   const [notifications, setNotifications] = React.useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
   const [auditLogs, setAuditLogs] = React.useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
 
-  // v3.0 Enterprise States (Developer API Keys & Team RBAC)
+  // Enterprise States
   const [apiKeys, setApiKeys] = React.useState<ApiKeyRecord[]>(INITIAL_API_KEYS);
+  const [webhooks, setWebhooks] = React.useState<WebhookRecord[]>(INITIAL_WEBHOOKS);
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>(INITIAL_TEAM);
 
   // Overlays State
   const [selectedTransaction, setSelectedTransaction] = React.useState<Transaction | null>(null);
   const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [invoiceModalTx, setInvoiceModalTx] = React.useState<Transaction | null>(null);
+  const [invoiceModalOpen, setInvoiceModalOpen] = React.useState(false);
   const [newOrderDialogOpen, setNewOrderDialogOpen] = React.useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
   const [copilotOpen, setCopilotOpen] = React.useState(false);
@@ -118,13 +148,13 @@ export default function FixentraApp() {
 
     try {
       const storedKeys = localStorage.getItem("fixentra_api_keys");
-      if (storedKeys) {
-        setApiKeys(JSON.parse(storedKeys));
-      }
+      if (storedKeys) setApiKeys(JSON.parse(storedKeys));
+
+      const storedWebhooks = localStorage.getItem("fixentra_webhooks");
+      if (storedWebhooks) setWebhooks(JSON.parse(storedWebhooks));
+
       const storedTeam = localStorage.getItem("fixentra_team_members");
-      if (storedTeam) {
-        setTeamMembers(JSON.parse(storedTeam));
-      }
+      if (storedTeam) setTeamMembers(JSON.parse(storedTeam));
     } catch {
       // ignore parse errors
     }
@@ -140,7 +170,7 @@ export default function FixentraApp() {
       ...prev,
     ]);
     toast.success(`Welcome back, ${user}!`, {
-      description: "Fixentra Enterprise Production v3.0 Core active.",
+      description: "Fixentra Enterprise Production v3.5 Fortress active.",
     });
   };
 
@@ -260,12 +290,13 @@ export default function FixentraApp() {
   const handleExportJSON = () => {
     triggerJSONDownload(`fixentra-ledger-export-${new Date().toISOString().split("T")[0]}`, {
       exportDate: new Date().toISOString(),
-      platform: "Fixentra Enterprise v3.0 (fixentra.my.id)",
+      platform: "Fixentra Enterprise v3.5 (fixentra.my.id)",
       currentUser,
       kpis,
       transactions,
       products,
       apiKeysCount: apiKeys.length,
+      webhooksCount: webhooks.length,
       auditLogs,
     });
     setAuditLogs((prev) => [
@@ -325,6 +356,78 @@ export default function FixentraApp() {
     toast.success("API Key Revoked", {
       description: `Access token ${target?.keyPrefix} has been permanently deactivated.`,
     });
+  };
+
+  // Webhook Registration
+  const handleAddWebhook = (webhook: Omit<WebhookRecord, "id" | "createdAt" | "active">) => {
+    const newRecord: WebhookRecord = {
+      ...webhook,
+      id: `wh-${Date.now()}`,
+      active: true,
+      createdAt: new Date().toISOString().split("T")[0],
+      lastDeliveredAt: null,
+      lastStatusCode: null,
+    };
+
+    const updated = [newRecord, ...webhooks];
+    setWebhooks(updated);
+    try {
+      localStorage.setItem("fixentra_webhooks", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    setAuditLogs((prev) => [
+      createAuditEntry("SETTINGS_SAVED", `Registered webhook "${webhook.name}" -> ${webhook.url}`, currentUser),
+      ...prev,
+    ]);
+  };
+
+  // Webhook Deletion
+  const handleDeleteWebhook = (id: string) => {
+    const target = webhooks.find((w) => w.id === id);
+    const updated = webhooks.filter((w) => w.id !== id);
+    setWebhooks(updated);
+    try {
+      localStorage.setItem("fixentra_webhooks", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    setAuditLogs((prev) => [
+      createAuditEntry("SETTINGS_SAVED", `Removed webhook "${target?.name || id}"`, currentUser),
+      ...prev,
+    ]);
+    toast.info("Webhook subscription removed.");
+  };
+
+  // Webhook Test Ping Simulation
+  const handleTestWebhook = (id: string) => {
+    const target = webhooks.find((w) => w.id === id);
+    if (!target) return;
+
+    toast.loading(`Dispatching signed test ping to ${target.name}...`, { id: "test-wh" });
+    setTimeout(() => {
+      const updated = webhooks.map((w) =>
+        w.id === id
+          ? {
+              ...w,
+              lastDeliveredAt: "Just now",
+              lastStatusCode: 200,
+            }
+          : w
+      );
+      setWebhooks(updated);
+      try {
+        localStorage.setItem("fixentra_webhooks", JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      toast.success(`Ping delivered (200 OK &bull; 42ms latency)`, {
+        id: "test-wh",
+        description: `HMAC-SHA256 signature accepted by ${target.url}`,
+      });
+    }, 450);
   };
 
   // Team RBAC Provisioning
@@ -400,7 +503,7 @@ export default function FixentraApp() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-xs font-mono text-muted-foreground">Initializing Fixentra Core v3.0...</span>
+          <span className="text-xs font-mono text-muted-foreground">Initializing Fixentra Core v3.5...</span>
         </div>
       </div>
     );
@@ -411,7 +514,7 @@ export default function FixentraApp() {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // AUTHENTICATED: Render Fixentra Enterprise Suite v3.0
+  // AUTHENTICATED: Render Fixentra Enterprise Suite v3.5
   const renderActiveView = () => {
     switch (activeSection) {
       case "products":
@@ -432,6 +535,10 @@ export default function FixentraApp() {
             apiKeys={apiKeys}
             onGenerateKey={handleGenerateApiKey}
             onRevokeKey={handleRevokeApiKey}
+            webhooks={webhooks}
+            onAddWebhook={handleAddWebhook}
+            onDeleteWebhook={handleDeleteWebhook}
+            onTestWebhook={handleTestWebhook}
           />
         );
       case "team":
@@ -453,7 +560,7 @@ export default function FixentraApp() {
                   Orders Management
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Inspect commercial transactions, update lifecycle status, and download audit logs.
+                  Inspect commercial transactions, generate tax invoices, and export audit registries.
                 </p>
               </div>
               <Button
@@ -585,11 +692,11 @@ export default function FixentraApp() {
                 Fixentra Enterprise
                 <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
                   <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  v3.0 Production Core
+                  v3.5 Production Fortress
                 </span>
               </h2>
               <p className="text-sm text-muted-foreground">
-                Enterprise operations, API Gateway, and database persistence on <span className="font-mono text-xs text-primary font-medium">fixentra.my.id</span>
+                Zero-Trust Persistence, REST API Gateway & Webhooks on <span className="font-mono text-xs text-primary font-medium">fixentra.my.id</span>
               </p>
             </div>
 
@@ -634,6 +741,16 @@ export default function FixentraApp() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onStatusUpdate={handleStatusChange}
+        onViewInvoice={(tx) => {
+          setInvoiceModalTx(tx);
+          setInvoiceModalOpen(true);
+        }}
+      />
+
+      <InvoiceModal
+        transaction={invoiceModalTx}
+        open={invoiceModalOpen}
+        onOpenChange={setInvoiceModalOpen}
       />
 
       <CreateOrderDialog

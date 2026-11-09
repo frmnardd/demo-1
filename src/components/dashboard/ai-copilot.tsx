@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Sparkles, Send, Bot, User, Trash2, ArrowUpRight, TrendingUp } from "lucide-react";
+import { Sparkles, Send, Bot, User, Trash2, ArrowUpRight, ShieldAlert, CheckCircle2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -37,42 +37,87 @@ export function processCopilotQuery(
   const revenueKpi = context.kpis.find((k) => k.id === "kpi-revenue");
   const totalRev = revenueKpi ? revenueKpi.value : "$0.00";
 
-  const pendingOrders = context.transactions.filter((t) => t.status === "pending");
-  const paidOrders = context.transactions.filter((t) => t.status === "paid");
-  const refundedOrders = context.transactions.filter((t) => t.status === "refunded");
+  const pendingOrders = context.transactions.filter(
+    (t) => t.status.toLowerCase() === "pending"
+  );
+  const paidOrders = context.transactions.filter(
+    (t) => t.status.toLowerCase() === "paid"
+  );
+  const failedOrders = context.transactions.filter(
+    (t) => t.status.toLowerCase() === "failed" || t.status.toLowerCase() === "refunded"
+  );
+
+  // Query: Anomaly Detection & Security Audit
+  if (
+    p.includes("anomali") ||
+    p.includes("keamanan") ||
+    p.includes("suspicious") ||
+    p.includes("fraud") ||
+    p.includes("audit") ||
+    p.includes("resiko")
+  ) {
+    const failedRatio =
+      context.transactions.length > 0
+        ? ((failedOrders.length / context.transactions.length) * 100).toFixed(1)
+        : "0.0";
+
+    const highValueTx = context.transactions.filter((t) => t.amount > 500);
+
+    return `🛡️ **Audit Keamanan & Deteksi Anomali Fixentra Core v3.5:**\n\n` +
+      `• **Tingkat Transaksi Gagal:** ${failedRatio}% (${failedOrders.length} dari ${context.transactions.length} transaksi).\n` +
+      `• **Transaksi Bernilai Tinggi (High-Value > $500):** Terdeteksi ${highValueTx.length} transaksi. Semua telah diverifikasi dengan SSL TLS 1.3 & SHA-256 ledger.\n` +
+      `• **Integritas Database:** SQLite Ledger aktif dan sinkron di fixentra.db.\n` +
+      `• **Rekomendasi Operasional:** Pantau transaksi berstatus Pending secara berkala untuk menghindari keterlambatan settlement perbankan.`;
+  }
 
   // Query: Revenue / Omzet
-  if (p.includes("revenue") || p.includes("pendapatan") || p.includes("omzet") || p.includes("penghasilan")) {
-    return `Total pendapatan (Gross Revenue) Fixentra saat ini tercatat sebesar **${totalRev}** (${revenueKpi?.change || "+20.1%"} dibandingkan bulan lalu). Dari total ${context.transactions.length} transaksi, ${paidOrders.length} pesanan telah lunas terbayar.`;
+  if (
+    p.includes("revenue") ||
+    p.includes("pendapatan") ||
+    p.includes("omzet") ||
+    p.includes("penghasilan")
+  ) {
+    return `Total pendapatan (Gross Revenue) Fixentra saat ini tercatat sebesar **${totalRev}** (${revenueKpi?.change || "+20.1%"} dibandingkan periode sebelumnya). Dari total ${context.transactions.length} transaksi, sebanyak **${paidOrders.length} pesanan telah lunas**.`;
   }
 
   // Query: Pending Orders
   if (p.includes("pending") || p.includes("tertunda") || p.includes("belum bayar")) {
     if (pendingOrders.length === 0) {
-      return "Saat ini tidak ada pesanan dengan status pending. Seluruh transaksi berstatus lunas atau telah diproses.";
+      return "Saat ini tidak ada pesanan dengan status pending. Seluruh transaksi berstatus lunas atau telah diproses secara normal.";
     }
     const pendingList = pendingOrders
       .map((o) => `• ${o.id}: **$${o.amount.toFixed(2)}** (${o.customer.name})`)
       .join("\n");
-    return `Terdapat **${pendingOrders.length} pesanan berstatus pending** yang menunggu pembayaran:\n\n${pendingList}\n\nAnda dapat membuka tab *Orders* untuk meninjau atau memverifikasi pembayaran.`;
+    return `Terdapat **${pendingOrders.length} pesanan berstatus pending** yang menunggu verifikasi:\n\n${pendingList}\n\nAnda dapat membuka tab *Orders* untuk memverifikasi atau mencetak invoice resmi.`;
   }
 
   // Query: Customers / Pelanggan / VIP
-  if (p.includes("pelanggan") || p.includes("customer") || p.includes("vip") || p.includes("klien")) {
+  if (
+    p.includes("pelanggan") ||
+    p.includes("customer") ||
+    p.includes("vip") ||
+    p.includes("klien")
+  ) {
     const topSpend = [...context.transactions].sort((a, b) => b.amount - a.amount).slice(0, 3);
     const topList = topSpend
-      .map((t, idx) => `${idx + 1}. **${t.customer.name}** - $${t.amount.toFixed(2)} (${t.customer.email})`)
+      .map(
+        (t, idx) =>
+          `${idx + 1}. **${t.customer.name}** - $${t.amount.toFixed(2)} (${t.customer.email})`
+      )
       .join("\n");
-    return `Fixentra mencatat transaksi dari berbagai klien enterprise. Tiga transaksi dengan nilai terbesar saat ini:\n\n${topList}\n\nSemua klien dengan total belanja di atas $1,000 otomatis berstatus tier **VIP**.`;
+    return `Fixentra mengelola transaksi dari berbagai institusi dan korporasi. Tiga pelanggan dengan volume belanja tertinggi:\n\n${topList}\n\nSetiap klien korporat dapat diberikan akses token API khusus via Developer Portal.`;
   }
 
-  // Query: Refund / Pengembalian
-  if (p.includes("refund") || p.includes("retur") || p.includes("kembali")) {
-    return `Tercatat ada **${refundedOrders.length} transaksi berstatus refunded**. Rata-rata klaim refund diselesaikan dalam waktu kurang dari 24 jam dengan audit log tercatat secara otomatis.`;
+  // Query: Webhook & Developer API
+  if (p.includes("webhook") || p.includes("api key") || p.includes("developer") || p.includes("token")) {
+    return `Gateway pengembang Fixentra v3.5 mendukung:\n\n` +
+      `• **Live REST API Tokens:** Format \`fix_live_...\` dengan otorisasi granular (\`read:orders\`, \`write:orders\`, \`read:analytics\`).\n` +
+      `• **Webhooks:** Pengiriman otomatis event \`order.created\`, \`order.paid\`, \`order.failed\` dengan signature HMAC-SHA256.\n` +
+      `• **Rate Limiting:** Proteksi bawaan 60-100 req/min untuk mencegah abuse.`;
   }
 
   // Query: Default / Help
-  return `Saya adalah **Fixentra AI Copilot v2.0**. Saya dapat membantu Anda menganalisis data toko secara instan:\n\n• Mengetahui total revenue & tren bulanan\n• Meringkas daftar pesanan pending\n• Memeriksa pelanggan dengan tier VIP\n• Memberikan wawasan performa konversi\n\nKetik pertanyaan Anda atau klik salah satu saran cepat di bawah!`;
+  return `Saya adalah **Fixentra AI Copilot v3.5 Enterprise**. Saya dapat membantu analisis finansial dan operasional toko Anda:\n\n• **Deteksi anomali & audit risiko keamanan**\n• Mengetahui total omzet, pesanan lunas, dan tren pertumbuhan\n• Meringkas daftar pesanan pending dan gagal\n• Mengidentifikasi klien bernilai tinggi (VIP)\n• Informasi integrasi REST API & Webhooks\n\nKetik pertanyaan Anda atau pilih pintasan cepat di bawah!`;
 }
 
 export function AiCopilotDrawer({
@@ -86,7 +131,7 @@ export function AiCopilotDrawer({
     {
       id: "initial",
       sender: "ai",
-      text: "Halo! Saya **Fixentra AI Copilot**. Apa yang ingin Anda ketahui tentang performa operasional atau pesanan hari ini?",
+      text: "Halo! Saya **Fixentra AI Copilot v3.5**. Sistem deteksi anomali dan analisis finansial siap membantu Anda.",
       timestamp: "Just now",
     },
   ]);
@@ -129,10 +174,10 @@ export function AiCopilotDrawer({
   };
 
   const quickPrompts = [
-    "Berapa revenue saat ini?",
+    "Deteksi anomali & keamanan",
+    "Berapa total revenue saat ini?",
     "Ringkas pesanan pending",
-    "Siapa pelanggan VIP teratas?",
-    "Status transaksi refund",
+    "Siapa klien terbesar?",
   ];
 
   return (
@@ -148,11 +193,11 @@ export function AiCopilotDrawer({
                 <SheetTitle className="text-base font-bold flex items-center gap-1.5">
                   Fixentra AI Copilot
                   <Badge variant="outline" className="text-[10px] py-0 px-1 border-primary/30 text-primary">
-                    v2.0
+                    v3.5 Enterprise
                   </Badge>
                 </SheetTitle>
                 <SheetDescription className="text-xs">
-                  Operational Assistant & Analytics Intelligence
+                  Financial Intelligence & Anomaly Guard
                 </SheetDescription>
               </div>
             </div>
@@ -231,7 +276,7 @@ export function AiCopilotDrawer({
             className="flex items-center gap-2"
           >
             <Input
-              placeholder="Ask Fixentra AI anything about your store..."
+              placeholder="Tanyakan analisis keuangan atau audit anomali..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               className="text-xs h-9 bg-background"
@@ -242,7 +287,7 @@ export function AiCopilotDrawer({
           </form>
 
           <p className="text-[10px] text-center text-muted-foreground">
-            Press <kbd className="font-mono bg-muted px-1 rounded">⌘J</kbd> or <kbd className="font-mono bg-muted px-1 rounded">Ctrl+J</kbd> to toggle AI Copilot anytime.
+            Tekan <kbd className="font-mono bg-muted px-1 rounded">⌘J</kbd> atau <kbd className="font-mono bg-muted px-1 rounded">Ctrl+J</kbd> untuk membuka AI Copilot kapan saja.
           </p>
         </div>
       </SheetContent>

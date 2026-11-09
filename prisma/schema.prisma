@@ -55,9 +55,21 @@ model ApiKey {
   createdAt   DateTime  @default(now())
 }
 
+model Webhook {
+  id              String    @id @default(cuid())
+  name            String
+  url             String
+  events          String    // JSON stringified array e.g. ["order.created", "order.paid", "order.failed"]
+  secretKey       String
+  active          Boolean   @default(true)
+  lastDeliveredAt DateTime?
+  lastStatusCode  Int?
+  createdAt       DateTime  @default(now())
+}
+
 model AuditLog {
   id          String   @id @default(cuid())
-  type        String   // order_create, status_change, export, login, apikey_create, team_invite, etc.
+  type        String
   description String
   actor       String
   timestamp   String

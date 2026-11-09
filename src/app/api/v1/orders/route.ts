@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authenticateApiKey } from "@/lib/api-gateway";
 import { prisma, ensureDatabaseSeeded } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rate-limiter";
+import { sanitizeObject } from "@/lib/sanitize";
 
 const CreateOrderSchema = z.object({
   customerName: z.string().min(2, "Customer name must be at least 2 characters"),
@@ -16,6 +18,16 @@ const CreateOrderSchema = z.object({
 export async function GET(req: NextRequest) {
   await ensureDatabaseSeeded();
 
+  // Rate Limiting
+  const clientIp = req.headers.get("x-forwarded-for") || "client-local";
+  const rateLimit = checkRateLimit(`orders-get-${clientIp}`, 100, 60000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too Many Requests. Rate limit exceeded.", retryAfter: rateLimit.retryAfterSeconds },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+    );
+  }
+
   const auth = await authenticateApiKey(req.headers.get("authorization"), "read:orders");
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -26,13 +38,21 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({
-      data: orders,
-      meta: {
-        total: orders.length,
-        retrievedAt: new Date().toISOString(),
+    return NextResponse.json(
+      {
+        data: orders,
+        meta: {
+          total: orders.length,
+          retrievedAt: new Date().toISOString(),
+          rateLimitRemaining: rateLimit.remaining,
+        },
       },
-    });
+      {
+        headers: {
+          "X-RateLimit-Remaining": String(rateLimit.remaining),
+        },
+      }
+    );
   } catch (err) {
     console.error("GET /api/v1/orders error:", err);
     return NextResponse.json({ error: "Failed to query orders" }, { status: 500 });
@@ -41,6 +61,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   await ensureDatabaseSeeded();
+
+  // Rate Limiting
+  const clientIp = req.headers.get("x-forwarded-for") || "client-local";
+  const rateLimit = checkRateLimit(`orders-post-${clientIp}`, 30, 60000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too Many Requests. Rate limit exceeded.", retryAfter: rateLimit.retryAfterSeconds },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+    );
+  }
 
   const auth = await authenticateApiKey(req.headers.get("authorization"), "write:orders");
   if (!auth.valid) {
@@ -61,7 +91,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { customerName, customerEmail, amount, status, itemsCount, method, note } = parsed.data;
+    // Sanitize input to eliminate XSS injections
+    const sanitized = sanitizeObject(parsed.data);
+    const { customerName, customerEmail, amount, status, itemsCount, method, note } = sanitized;
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
 
@@ -78,17 +110,23 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Record audit trail
+    // Record immutable audit trail
     await prisma.auditLog.create({
       data: {
         type: "order_create",
-        description: `API Gateway Order created for ${customerName} ($${amount}) via ${auth.apiKey?.name || "API Key"}`,
+        description: `API Order created for ${customerName} ($${amount}) via ${auth.apiKey?.name || "API Key"}`,
         actor: auth.apiKey?.name || "API_CLIENT",
         timestamp: "Just now",
       },
     });
 
-    return NextResponse.json({ success: true, data: order }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: order },
+      {
+        status: 201,
+        headers: { "X-RateLimit-Remaining": String(rateLimit.remaining) },
+      }
+    );
   } catch (err) {
     console.error("POST /api/v1/orders error:", err);
     return NextResponse.json({ error: "Invalid JSON body or internal error" }, { status: 400 });
