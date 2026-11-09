@@ -13,7 +13,7 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 /**
  * Self-healing seeder: ensures default admin user, baseline enterprise products,
- * and transactions are populated upon initial startup.
+ * transactions, API keys, and webhooks are populated upon initial startup.
  */
 export async function ensureDatabaseSeeded(): Promise<void> {
   try {
@@ -136,6 +136,37 @@ export async function ensureDatabaseSeeded(): Promise<void> {
             note: "Payment processor timeout",
           },
         ],
+      });
+    }
+
+    // Check if baseline API keys exist
+    const apiKeyCount = await prisma.apiKey.count();
+    if (apiKeyCount === 0) {
+      await prisma.apiKey.create({
+        data: {
+          name: "Enterprise ERP Ingestion Key",
+          keyPrefix: "fix_live_9f8a...4b12",
+          keyHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          permissions: JSON.stringify(["read:orders", "write:orders", "read:analytics"]),
+          active: true,
+          lastUsed: new Date(),
+        },
+      });
+    }
+
+    // Check if baseline Webhooks exist
+    const webhookCount = await prisma.webhook.count();
+    if (webhookCount === 0) {
+      await prisma.webhook.create({
+        data: {
+          name: "Slack Financial Alerts",
+          url: "https://hooks.slack.com/services/T00/B00/X00",
+          events: JSON.stringify(["order.created", "order.paid"]),
+          secretKey: "whsec_8a7d16f901cb4d8e9a2b5c00f124a91b2c",
+          active: true,
+          lastDeliveredAt: new Date(),
+          lastStatusCode: 200,
+        },
       });
     }
   } catch (err) {

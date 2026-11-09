@@ -29,4 +29,14 @@ describe("Database & Persistence Layer (Review Focus #5)", () => {
     const transactions = await prisma.transaction.findMany();
     expect(transactions.length).toBeGreaterThanOrEqual(5);
   });
+
+  it("seeds baseline API keys and Webhooks", async () => {
+    const apiKeys = await prisma.apiKey.findMany();
+    expect(apiKeys.length).toBeGreaterThanOrEqual(1);
+    expect(apiKeys[0].keyPrefix.startsWith("fix_live_")).toBe(true);
+
+    const webhooks = await prisma.webhook.findMany();
+    expect(webhooks.length).toBeGreaterThanOrEqual(1);
+    expect(webhooks[0].secretKey.startsWith("whsec_")).toBe(true);
+  });
 });
