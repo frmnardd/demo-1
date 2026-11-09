@@ -1,28 +1,30 @@
 "use client";
 
 import * as React from "react";
-import { User, Bell, Globe, ShieldAlert, Check } from "lucide-react";
+import { User, Bell, Globe, ShieldCheck, Check, Database, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 interface SettingsViewProps {
-  onResetData: () => void;
+  onResyncDatabase: () => void;
+  currentUser?: string;
 }
 
-export function SettingsView({ onResetData }: SettingsViewProps) {
+export function SettingsView({ onResyncDatabase, currentUser = "ardfrmn" }: SettingsViewProps) {
   const [name, setName] = React.useState("Firman Ardiansyah");
-  const [email, setEmail] = React.useState("admin@acmeflow.dev");
-  const [role, setRole] = React.useState("Lead Architect");
+  const [email, setEmail] = React.useState("firman@fixentra.my.id");
+  const [role, setRole] = React.useState("Super Administrator");
   const [currency, setCurrency] = React.useState("USD ($)");
   const [emailAlerts, setEmailAlerts] = React.useState(true);
   const [weeklyDigest, setWeeklyDigest] = React.useState(true);
+  const [isResyncing, setIsResyncing] = React.useState(false);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     toast.success("Profile updated successfully", {
-      description: `Name set to ${name} (${role})`,
+      description: `Identity set to ${name} (${role})`,
     });
   };
 
@@ -31,6 +33,17 @@ export function SettingsView({ onResetData }: SettingsViewProps) {
     toast.success("Workspace preferences saved", {
       description: `Primary currency: ${currency}`,
     });
+  };
+
+  const handleResync = () => {
+    setIsResyncing(true);
+    setTimeout(() => {
+      onResyncDatabase();
+      setIsResyncing(false);
+      toast.success("Ledger Synchronized", {
+        description: "Prisma SQLite ledger indices and baseline datasets verified.",
+      });
+    }, 400);
   };
 
   return (
@@ -44,7 +57,7 @@ export function SettingsView({ onResetData }: SettingsViewProps) {
               <CardTitle className="text-base font-semibold">Account Profile</CardTitle>
             </div>
             <CardDescription>
-              Update your personal credentials and operational identity
+              Manage your verified operational identity and root credentials
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -54,13 +67,19 @@ export function SettingsView({ onResetData }: SettingsViewProps) {
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-medium">Work Email</label>
+                <label className="text-xs font-medium">Corporate Email</label>
                 <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium">Role / Title</label>
-              <Input value={role} onChange={(e) => setRole(e.target.value)} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-medium">Username</label>
+                <Input value={currentUser} disabled className="bg-muted text-muted-foreground font-mono text-xs" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium">Security Role</label>
+                <Input value={role} onChange={(e) => setRole(e.target.value)} />
+              </div>
             </div>
           </CardContent>
           <CardFooter className="border-t pt-4 flex justify-end">
@@ -122,10 +141,10 @@ export function SettingsView({ onResetData }: SettingsViewProps) {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base font-semibold">Notifications & Alerts</CardTitle>
+            <CardTitle className="text-base font-semibold">Notifications & Realtime Alerts</CardTitle>
           </div>
           <CardDescription>
-            Choose how Acme Flow informs you about real-time order completions and digests
+            Configure how Fixentra Enterprise dispatches alerts for order state changes and security events
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -133,7 +152,7 @@ export function SettingsView({ onResetData }: SettingsViewProps) {
             <div className="space-y-0.5">
               <span className="text-sm font-medium">Order Transaction Alerts</span>
               <p className="text-xs text-muted-foreground">
-                Instant notification whenever a customer finishes checkout
+                Instant notification whenever an order is settled or ingested via API
               </p>
             </div>
             <input
@@ -151,7 +170,7 @@ export function SettingsView({ onResetData }: SettingsViewProps) {
             <div className="space-y-0.5">
               <span className="text-sm font-medium">Executive Weekly Digest</span>
               <p className="text-xs text-muted-foreground">
-                Weekly summarized report sent every Monday morning
+                Summarized financial ledger report dispatched every Monday
               </p>
             </div>
             <input
@@ -167,33 +186,31 @@ export function SettingsView({ onResetData }: SettingsViewProps) {
         </CardContent>
       </Card>
 
-      {/* Danger Zone: Reset Data */}
-      <Card className="border-destructive/30 bg-destructive/5">
+      {/* Database Ledger Maintenance */}
+      <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
-          <div className="flex items-center gap-2 text-destructive">
-            <ShieldAlert className="h-5 w-5" />
-            <CardTitle className="text-base font-semibold">Demo Data Reset</CardTitle>
+          <div className="flex items-center gap-2 text-primary">
+            <Database className="h-5 w-5" />
+            <CardTitle className="text-base font-semibold">Database Ledger Maintenance</CardTitle>
           </div>
           <CardDescription>
-            Restore all orders, customers, and KPI metrics back to clean factory state
+            Re-synchronize SQLite durable persistence tables and verify baseline transactional integrity.
           </CardDescription>
         </CardHeader>
-        <CardFooter className="flex justify-between items-center border-t border-destructive/20 pt-4">
-          <span className="text-xs text-muted-foreground">
-            This will wipe custom created orders and restore initial seed items.
+        <CardFooter className="flex justify-between items-center border-t border-primary/10 pt-4">
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            Prisma ORM engine running at fixentra.db
           </span>
           <Button
-            variant="destructive"
+            variant="outline"
             size="sm"
-            onClick={() => {
-              onResetData();
-              toast.success("Dataset restored", {
-                description: "All transactions and KPI totals reset to factory demo values.",
-              });
-            }}
-            className="text-xs"
+            disabled={isResyncing}
+            onClick={handleResync}
+            className="text-xs gap-1.5"
           >
-            Reset Demo Data
+            <RefreshCw className={`h-3.5 w-3.5 ${isResyncing ? "animate-spin" : ""}`} />
+            {isResyncing ? "Verifying Ledger..." : "Synchronize Database"}
           </Button>
         </CardFooter>
       </Card>

@@ -7,7 +7,12 @@ export type AuditEventType =
   | "PRODUCT_STATUS_CHANGED"
   | "DATA_EXPORTED"
   | "SETTINGS_SAVED"
-  | "DATA_RESET";
+  | "DATA_RESET"
+  | "API_KEY_CREATED"
+  | "API_KEY_REVOKED"
+  | "TEAM_MEMBER_PROVISIONED"
+  | "TEAM_MEMBER_DEACTIVATED"
+  | "LEDGER_RESYNC";
 
 export interface AuditLogEntry {
   id: string;

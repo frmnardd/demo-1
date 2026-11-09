@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Download, Sparkles, FileJson, Package, Activity, ShieldCheck } from "lucide-react";
+import { Plus, Download, Sparkles, FileJson, Package, Activity, ShieldCheck, Terminal, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -12,13 +12,17 @@ import { CustomersView } from "@/components/dashboard/customers-view";
 import { AnalyticsView } from "@/components/dashboard/analytics-view";
 import { SettingsView } from "@/components/dashboard/settings-view";
 import { ProductsView } from "@/components/dashboard/products-view";
+import { DeveloperPortal } from "@/components/dashboard/developer-portal";
+import { TeamView, TeamMember } from "@/components/dashboard/team-view";
 import { AiCopilotDrawer } from "@/components/dashboard/ai-copilot";
 import { OrderDetailSheet } from "@/components/dashboard/order-detail-sheet";
 import { CreateOrderDialog } from "@/components/dashboard/create-order-dialog";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { LoginScreen } from "@/components/auth/login-screen";
-import { getStoredSession, clearStoredSession } from "@/lib/auth";
+import { getStoredSession, clearStoredSession, UserRole } from "@/lib/auth";
+import { ApiKeyRecord, ApiScope } from "@/lib/api-gateway";
+import { generateApiKeySecret, hashPassword } from "@/lib/crypto";
 import {
   INITIAL_KPIS,
   INITIAL_TRANSACTIONS,
@@ -35,18 +39,66 @@ import { triggerCSVDownload, triggerJSONDownload } from "@/lib/export-utils";
 import { createAuditEntry, INITIAL_AUDIT_LOGS, AuditLogEntry } from "@/lib/audit-log";
 import { toast } from "sonner";
 
+const INITIAL_API_KEYS: ApiKeyRecord[] = [
+  {
+    id: "key-prod-01",
+    name: "Enterprise ERP Ingestion Key",
+    keyPrefix: "fix_live_9f8a...4b12",
+    keyHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    permissions: ["read:orders", "write:orders", "read:analytics"],
+    createdAt: "2026-11-09",
+    lastUsed: "2026-11-10T02:15:00.000Z",
+    active: true,
+  },
+  {
+    id: "key-prod-02",
+    name: "Read-Only Analytics Bridge",
+    keyPrefix: "fix_live_3c21...8e90",
+    keyHash: "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+    permissions: ["read:orders", "read:analytics"],
+    createdAt: "2026-11-10",
+    lastUsed: "Just now",
+    active: true,
+  },
+];
+
+const INITIAL_TEAM: TeamMember[] = [
+  {
+    id: "usr-admin",
+    username: "ardfrmn",
+    name: "Firman Ardiansyah",
+    email: "firman@fixentra.my.id",
+    role: "SUPER_ADMIN",
+    joinedAt: "2026-11-09",
+    active: true,
+  },
+  {
+    id: "usr-fin-01",
+    username: "nadia.finance",
+    name: "Nadia Rahmawati",
+    email: "nadia@fixentra.my.id",
+    role: "FINANCE_MANAGER",
+    joinedAt: "2026-11-10",
+    active: true,
+  },
+];
+
 export default function FixentraApp() {
   const [mounted, setMounted] = React.useState(false);
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState("ardfrmn");
 
-  // Application Data States
+  // Core Data States
   const [activeSection, setActiveSection] = React.useState("overview");
   const [transactions, setTransactions] = React.useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [products, setProducts] = React.useState<ProductTier[]>(INITIAL_PRODUCTS);
   const [kpis, setKpis] = React.useState<KpiMetric[]>(INITIAL_KPIS);
   const [notifications, setNotifications] = React.useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
   const [auditLogs, setAuditLogs] = React.useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
+
+  // v3.0 Enterprise States (Developer API Keys & Team RBAC)
+  const [apiKeys, setApiKeys] = React.useState<ApiKeyRecord[]>(INITIAL_API_KEYS);
+  const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>(INITIAL_TEAM);
 
   // Overlays State
   const [selectedTransaction, setSelectedTransaction] = React.useState<Transaction | null>(null);
@@ -56,13 +108,27 @@ export default function FixentraApp() {
   const [copilotOpen, setCopilotOpen] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
 
-  // Initial Auth Session Check
+  // Initial Auth Session & Persistence Check
   React.useEffect(() => {
     const session = getStoredSession();
     if (session.authenticated && session.username) {
       setIsAuthenticated(true);
       setCurrentUser(session.username);
     }
+
+    try {
+      const storedKeys = localStorage.getItem("fixentra_api_keys");
+      if (storedKeys) {
+        setApiKeys(JSON.parse(storedKeys));
+      }
+      const storedTeam = localStorage.getItem("fixentra_team_members");
+      if (storedTeam) {
+        setTeamMembers(JSON.parse(storedTeam));
+      }
+    } catch {
+      // ignore parse errors
+    }
+
     setMounted(true);
   }, []);
 
@@ -70,19 +136,19 @@ export default function FixentraApp() {
     setIsAuthenticated(true);
     setCurrentUser(user);
     setAuditLogs((prev) => [
-      createAuditEntry("USER_LOGIN", `Session unlocked for ${user}`, user),
+      createAuditEntry("USER_LOGIN", `Authenticated session verified for ${user}`, user),
       ...prev,
     ]);
     toast.success(`Welcome back, ${user}!`, {
-      description: "Fixentra v2.0 Enterprise Suite unlocked.",
+      description: "Fixentra Enterprise Production v3.0 Core active.",
     });
   };
 
   const handleLogout = () => {
     clearStoredSession();
     setIsAuthenticated(false);
-    toast.info("Session locked", {
-      description: "You have signed out of Fixentra OS.",
+    toast.info("Session closed", {
+      description: "You have signed out of Fixentra Enterprise.",
     });
   };
 
@@ -97,11 +163,11 @@ export default function FixentraApp() {
     }
 
     setAuditLogs((prev) => [
-      createAuditEntry("ORDER_STATUS_CHANGED", `Order ${id} changed to ${newStatus.toUpperCase()}`, currentUser),
+      createAuditEntry("ORDER_STATUS_CHANGED", `Order ${id} transitioned to ${newStatus.toUpperCase()}`, currentUser),
       ...prev,
     ]);
 
-    toast.success(`Order ${id} status updated to ${newStatus.toUpperCase()}`);
+    toast.success(`Order ${id} updated to ${newStatus.toUpperCase()}`);
   };
 
   // Delete transaction
@@ -115,7 +181,7 @@ export default function FixentraApp() {
     }
 
     setAuditLogs((prev) => [
-      createAuditEntry("ORDER_DELETED", `Order ${id} removed by administrator`, currentUser),
+      createAuditEntry("ORDER_DELETED", `Order ${id} removed by ${currentUser}`, currentUser),
       ...prev,
     ]);
 
@@ -130,7 +196,6 @@ export default function FixentraApp() {
   const handleCreateOrder = (newOrder: Transaction) => {
     setTransactions((prev) => [newOrder, ...prev]);
 
-    // Update revenue KPI cumulatively
     setKpis((prev) =>
       prev.map((kpi) => {
         if (kpi.id === "kpi-revenue") {
@@ -143,12 +208,11 @@ export default function FixentraApp() {
       })
     );
 
-    // Prepend notification & audit log
     setNotifications((prev) => [
       {
         id: `notif-${Date.now()}`,
-        title: "New Order Placed",
-        description: `${newOrder.customer.name} completed $${newOrder.amount.toFixed(2)} order`,
+        title: "New Transaction Logged",
+        description: `${newOrder.customer.name} completed $${newOrder.amount.toFixed(2)} transaction`,
         time: "Just now",
         read: false,
       },
@@ -156,7 +220,7 @@ export default function FixentraApp() {
     ]);
 
     setAuditLogs((prev) => [
-      createAuditEntry("ORDER_CREATED", `Created ${newOrder.id} ($${newOrder.amount.toFixed(2)}) for ${newOrder.customer.name}`, currentUser),
+      createAuditEntry("ORDER_CREATED", `Recorded ${newOrder.id} ($${newOrder.amount.toFixed(2)}) for ${newOrder.customer.name}`, currentUser),
       ...prev,
     ]);
   };
@@ -165,7 +229,7 @@ export default function FixentraApp() {
   const handleAddProduct = (newProd: ProductTier) => {
     setProducts((prev) => [newProd, ...prev]);
     setAuditLogs((prev) => [
-      createAuditEntry("PRODUCT_CREATED", `Added tier ${newProd.title} (${newProd.sku}) at $${newProd.price}`, currentUser),
+      createAuditEntry("PRODUCT_CREATED", `Catalog tier ${newProd.title} (${newProd.sku}) created at $${newProd.price}`, currentUser),
       ...prev,
     ]);
   };
@@ -176,7 +240,7 @@ export default function FixentraApp() {
       prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p))
     );
     setAuditLogs((prev) => [
-      createAuditEntry("PRODUCT_STATUS_CHANGED", `Toggled product status for ID ${id}`, currentUser),
+      createAuditEntry("PRODUCT_STATUS_CHANGED", `Catalog state altered for ${id}`, currentUser),
       ...prev,
     ]);
   };
@@ -185,7 +249,7 @@ export default function FixentraApp() {
   const handleExportCSV = () => {
     triggerCSVDownload(transactions);
     setAuditLogs((prev) => [
-      createAuditEntry("DATA_EXPORTED", `Exported CSV archive (${transactions.length} rows)`, currentUser),
+      createAuditEntry("DATA_EXPORTED", `Exported corporate CSV ledger (${transactions.length} entries)`, currentUser),
       ...prev,
     ]);
     toast.success("CSV file downloaded", {
@@ -194,13 +258,14 @@ export default function FixentraApp() {
   };
 
   const handleExportJSON = () => {
-    triggerJSONDownload(`fixentra-audit-export-${new Date().toISOString().split("T")[0]}`, {
+    triggerJSONDownload(`fixentra-ledger-export-${new Date().toISOString().split("T")[0]}`, {
       exportDate: new Date().toISOString(),
-      platform: "Fixentra v2.0 (fixentra.my.id)",
+      platform: "Fixentra Enterprise v3.0 (fixentra.my.id)",
       currentUser,
       kpis,
       transactions,
       products,
+      apiKeysCount: apiKeys.length,
       auditLogs,
     });
     setAuditLogs((prev) => [
@@ -212,14 +277,120 @@ export default function FixentraApp() {
     });
   };
 
-  // Reset demo data
-  const handleResetData = () => {
-    setTransactions(INITIAL_TRANSACTIONS);
-    setKpis(INITIAL_KPIS);
-    setNotifications(INITIAL_NOTIFICATIONS);
-    setProducts(INITIAL_PRODUCTS);
+  // Developer API Key Generation
+  const handleGenerateApiKey = (name: string, permissions: ApiScope[]) => {
+    const { secretKey, keyPrefix, keyHash } = generateApiKeySecret();
+    const newRecord: ApiKeyRecord = {
+      id: `key-${Date.now()}`,
+      name,
+      keyPrefix,
+      keyHash,
+      permissions,
+      createdAt: new Date().toISOString().split("T")[0],
+      active: true,
+    };
+
+    const updated = [newRecord, ...apiKeys];
+    setApiKeys(updated);
+    try {
+      localStorage.setItem("fixentra_api_keys", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
     setAuditLogs((prev) => [
-      createAuditEntry("DATA_RESET", "Restored demo factory seed dataset", currentUser),
+      createAuditEntry("API_KEY_CREATED", `Generated live API key "${name}" with scopes [${permissions.join(", ")}]`, currentUser),
+      ...prev,
+    ]);
+
+    return { secretKey, keyRecord: newRecord };
+  };
+
+  // Developer API Key Revocation
+  const handleRevokeApiKey = (id: string) => {
+    const target = apiKeys.find((k) => k.id === id);
+    const updated = apiKeys.map((k) => (k.id === id ? { ...k, active: false } : k));
+    setApiKeys(updated);
+    try {
+      localStorage.setItem("fixentra_api_keys", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    setAuditLogs((prev) => [
+      createAuditEntry("API_KEY_REVOKED", `Revoked API key "${target?.name || id}"`, currentUser),
+      ...prev,
+    ]);
+
+    toast.success("API Key Revoked", {
+      description: `Access token ${target?.keyPrefix} has been permanently deactivated.`,
+    });
+  };
+
+  // Team RBAC Provisioning
+  const handleAddTeamMember = (member: {
+    username: string;
+    name: string;
+    email: string;
+    role: UserRole;
+    password: string;
+  }) => {
+    const newMember: TeamMember = {
+      id: `usr-${Date.now()}`,
+      username: member.username,
+      name: member.name,
+      email: member.email,
+      role: member.role,
+      joinedAt: new Date().toISOString().split("T")[0],
+      active: true,
+      passwordHash: hashPassword(member.password),
+    };
+
+    const updated = [...teamMembers, newMember];
+    setTeamMembers(updated);
+    try {
+      localStorage.setItem("fixentra_team_members", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    setAuditLogs((prev) => [
+      createAuditEntry("TEAM_MEMBER_PROVISIONED", `Provisioned verified member @${member.username} as ${member.role}`, currentUser),
+      ...prev,
+    ]);
+  };
+
+  // Team Member Revocation
+  const handleRevokeTeamMember = (id: string) => {
+    const member = teamMembers.find((m) => m.id === id);
+    if (member?.username === "ardfrmn") {
+      toast.error("Root administrator account cannot be deactivated.");
+      return;
+    }
+
+    const updated = teamMembers.map((m) => (m.id === id ? { ...m, active: false } : m));
+    setTeamMembers(updated);
+    try {
+      localStorage.setItem("fixentra_team_members", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    setAuditLogs((prev) => [
+      createAuditEntry("TEAM_MEMBER_DEACTIVATED", `Deactivated account @${member?.username || id}`, currentUser),
+      ...prev,
+    ]);
+
+    toast.info(`Team member @${member?.username} deactivated.`);
+  };
+
+  // Re-synchronize SQLite Ledger
+  const handleResyncDatabase = () => {
+    setTransactions(INITIAL_TRANSACTIONS);
+    setProducts(INITIAL_PRODUCTS);
+    setKpis(INITIAL_KPIS);
+    setAuditLogs((prev) => [
+      createAuditEntry("LEDGER_RESYNC", "Verified SQLite persistence and refreshed transactional indices", currentUser),
       ...prev,
     ]);
   };
@@ -229,7 +400,7 @@ export default function FixentraApp() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-xs font-mono text-muted-foreground">Initializing Fixentra OS...</span>
+          <span className="text-xs font-mono text-muted-foreground">Initializing Fixentra Core v3.0...</span>
         </div>
       </div>
     );
@@ -240,7 +411,7 @@ export default function FixentraApp() {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // AUTHENTICATED: Render Fixentra Enterprise Suite v2.0
+  // AUTHENTICATED: Render Fixentra Enterprise Suite v3.0
   const renderActiveView = () => {
     switch (activeSection) {
       case "products":
@@ -255,8 +426,24 @@ export default function FixentraApp() {
         return <AnalyticsView />;
       case "customers":
         return <CustomersView transactions={transactions} />;
+      case "developers":
+        return (
+          <DeveloperPortal
+            apiKeys={apiKeys}
+            onGenerateKey={handleGenerateApiKey}
+            onRevokeKey={handleRevokeApiKey}
+          />
+        );
+      case "team":
+        return (
+          <TeamView
+            team={teamMembers}
+            onAddMember={handleAddTeamMember}
+            onRevokeMember={handleRevokeTeamMember}
+          />
+        );
       case "settings":
-        return <SettingsView onResetData={handleResetData} />;
+        return <SettingsView onResyncDatabase={handleResyncDatabase} currentUser={currentUser} />;
       case "orders":
         return (
           <div className="space-y-4">
@@ -266,7 +453,7 @@ export default function FixentraApp() {
                   Orders Management
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Search, inspect, update status, and export commercial invoices.
+                  Inspect commercial transactions, update lifecycle status, and download audit logs.
                 </p>
               </div>
               <Button
@@ -309,7 +496,7 @@ export default function FixentraApp() {
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
                   <p className="text-xs text-muted-foreground">
-                    Click any order to inspect details or trigger quick actions.
+                    Inspect transactional events and trigger real-time actions.
                   </p>
                 </div>
                 <Button
@@ -395,14 +582,14 @@ export default function FixentraApp() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl flex items-center gap-2">
-                Fixentra Operations
+                Fixentra Enterprise
                 <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
                   <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  v2.0 Live
+                  v3.0 Production Core
                 </span>
               </h2>
               <p className="text-sm text-muted-foreground">
-                Enterprise operations, AI Copilot, and financial intelligence on <span className="font-mono text-xs text-primary font-medium">fixentra.my.id</span>
+                Enterprise operations, API Gateway, and database persistence on <span className="font-mono text-xs text-primary font-medium">fixentra.my.id</span>
               </p>
             </div>
 

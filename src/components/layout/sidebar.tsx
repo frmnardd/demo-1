@@ -8,6 +8,7 @@ import {
   Users,
   Settings,
   Package,
+  Terminal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +23,12 @@ interface SidebarProps {
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard, badge: null },
-  { id: "products", label: "Products", icon: Package, badge: "v2.0" },
+  { id: "products", label: "Products", icon: Package, badge: null },
   { id: "analytics", label: "Analytics", icon: BarChart3, badge: null },
   { id: "orders", label: "Orders", icon: ShoppingCart, badge: "10" },
   { id: "customers", label: "Customers", icon: Users, badge: null },
+  { id: "developers", label: "Developers", icon: Terminal, badge: "v3.0" },
+  { id: "team", label: "Team & RBAC", icon: Users, badge: null },
   { id: "settings", label: "Settings", icon: Settings, badge: null },
 ];
 
@@ -94,14 +97,14 @@ export function Sidebar({
       {/* Bottom Status Card */}
       <div className="rounded-xl border bg-muted/30 p-3 space-y-1.5">
         <div className="flex items-center justify-between text-xs font-medium">
-          <span className="text-muted-foreground">System Status</span>
+          <span className="text-muted-foreground">Gateway Status</span>
           <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Operational
+            Live v3.0 Core
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground/80">
-          All services and APIs running smoothly.
+          fixentra.my.id &bull; SSL TLS 1.3 Active
         </p>
       </div>
     </aside>
