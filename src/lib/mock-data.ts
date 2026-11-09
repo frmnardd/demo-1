@@ -1,3 +1,60 @@
+export interface ProductTier {
+  id: string;
+  sku: string;
+  title: string;
+  description: string;
+  price: number;
+  interval: "monthly" | "yearly" | "one-time";
+  features: string[];
+  active: boolean;
+  tierBadge?: string;
+}
+
+export const INITIAL_PRODUCTS: ProductTier[] = [
+  {
+    id: "prod-starter",
+    sku: "FIX-START",
+    title: "Fixentra Starter",
+    description: "Ideal for emerging digital businesses and small operations.",
+    price: 49.0,
+    interval: "monthly",
+    features: ["Up to 1,000 monthly orders", "Basic analytics dashboard", "Standard email support", "CSV data export"],
+    active: true,
+  },
+  {
+    id: "prod-pro",
+    sku: "FIX-PRO",
+    title: "Fixentra Professional",
+    description: "Advanced operational tooling and AI Copilot for growing teams.",
+    price: 199.0,
+    interval: "monthly",
+    features: ["Unlimited transactions", "Fixentra AI Copilot (⌘J)", "Realtime Webhook triggers", "Priority 24/7 SLA", "Multi-user seats (up to 10)"],
+    active: true,
+    tierBadge: "Most Popular",
+  },
+  {
+    id: "prod-ent",
+    sku: "FIX-ENT",
+    title: "Fixentra Enterprise Suite",
+    description: "Dedicated cluster capacity, custom integrations, and compliance.",
+    price: 999.0,
+    interval: "monthly",
+    features: ["Dedicated VPS / on-premise node", "Custom AI fine-tuning", "Unlimited seats & audit logs", "Dedicated Technical Account Manager", "White-label custom domain"],
+    active: true,
+    tierBadge: "Enterprise",
+  },
+  {
+    id: "prod-api",
+    sku: "FIX-API-DEV",
+    title: "Fixentra Developer API",
+    description: "High-throughput API token access for headless integrations.",
+    price: 149.0,
+    interval: "monthly",
+    features: ["1,000,000 API requests/month", "Sub-10ms edge latency", "Raw JSON audit log streaming", "Sandbox testing environment"],
+    active: true,
+  },
+];
+
 export interface AppNotification {
   id: string;
   title: string;
