@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  name         String
+  email        String   @unique
+  role         String   @default("OPERATOR") // SUPER_ADMIN, FINANCE_MANAGER, OPERATOR
+  createdAt    DateTime @default(now())
+}
+
+model Transaction {
+  id             String   @id @default(cuid())
+  customerName   String
+  customerEmail  String
+  customerAvatar String?
+  amount         Float
+  status         String   // Paid, Pending, Failed
+  date           String
+  itemsCount     Int      @default(1)
+  method         String   @default("Credit Card")
+  note           String?
+  createdAt      DateTime @default(now())
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  title       String
+  description String
+  price       Float
+  interval    String   // month, year, one-time
+  features    String   // JSON stringified array of features
+  active      Boolean  @default(true)
+  tierBadge   String?
+  createdAt   DateTime @default(now())
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  keyPrefix   String
+  keyHash     String    @unique
+  permissions String    // JSON stringified array of scopes: ["read:orders", "write:orders", "read:analytics"]
+  lastUsed    DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  type        String   // order_create, status_change, export, login, apikey_create, team_invite, etc.
+  description String
+  actor       String
+  timestamp   String
+  createdAt   DateTime @default(now())
+}

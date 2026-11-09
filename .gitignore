@@ -3,4 +3,7 @@ node_modules
 out
 .superpowers
 .env*.local
+.env
+*.db
+*.db-journal
 *.log
