@@ -24,17 +24,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
+import { AppNotification } from "@/lib/mock-data";
+
 interface HeaderProps {
   onOpenCommandPalette: () => void;
   onToggleMobileSidebar: () => void;
   activeSectionTitle?: string;
+  notifications?: AppNotification[];
+  onMarkAllNotificationsRead?: () => void;
+  onDismissNotification?: (id: string) => void;
 }
 
 export function Header({
   onOpenCommandPalette,
   onToggleMobileSidebar,
   activeSectionTitle = "Overview",
+  notifications = [],
+  onMarkAllNotificationsRead,
+  onDismissNotification,
 }: HeaderProps) {
+  const unreadCount = notifications.filter((n) => !n.read).length;
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/80 backdrop-blur-md px-4 sm:px-6">
       {/* Left: Mobile Menu Toggle & Title */}
@@ -86,41 +95,67 @@ export function Header({
               aria-label="View notifications"
             >
               <Bell className="h-4 w-4" />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary animate-pulse" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {unreadCount}
+                </span>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel className="flex items-center justify-between">
               <span>Notifications</span>
-              <span className="text-xs font-normal text-muted-foreground">
-                2 unread
-              </span>
+              {unreadCount > 0 ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMarkAllNotificationsRead?.();
+                    toast.success("All notifications marked as read");
+                  }}
+                  className="text-xs font-normal text-primary hover:underline cursor-pointer"
+                >
+                  Mark all read
+                </button>
+              ) : (
+                <span className="text-xs font-normal text-muted-foreground">
+                  All caught up
+                </span>
+              )}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="flex flex-col items-start gap-1 p-3 cursor-pointer"
-              onClick={() => toast.info("Order ORD-7281 approved")}
-            >
-              <span className="text-xs font-semibold text-foreground">
-                New Enterprise Order
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Olivia Martin completed \$1,999.00 payment
-              </span>
-              <span className="text-[10px] text-muted-foreground/70">10m ago</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="flex flex-col items-start gap-1 p-3 cursor-pointer"
-              onClick={() => toast.info("Monitoring quota alert")}
-            >
-              <span className="text-xs font-semibold text-foreground">
-                System Health Normal
-              </span>
-              <span className="text-xs text-muted-foreground">
-                All cloud clusters operational at 99.98% uptime
-              </span>
-              <span className="text-[10px] text-muted-foreground/70">1h ago</span>
-            </DropdownMenuItem>
+            {notifications.length > 0 ? (
+              notifications.map((notif) => (
+                <DropdownMenuItem
+                  key={notif.id}
+                  className={`flex flex-col items-start gap-1 p-3 cursor-pointer ${
+                    !notif.read ? "bg-muted/40 font-medium" : "opacity-80"
+                  }`}
+                  onClick={() => {
+                    onDismissNotification?.(notif.id);
+                    toast.info(`Notification: ${notif.title}`);
+                  }}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <span className="text-xs font-semibold text-foreground">
+                      {notif.title}
+                    </span>
+                    {!notif.read && (
+                      <span className="h-2 w-2 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {notif.description}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/70">
+                    {notif.time}
+                  </span>
+                </DropdownMenuItem>
+              ))
+            ) : (
+              <div className="p-4 text-center text-xs text-muted-foreground">
+                No new notifications
+              </div>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 

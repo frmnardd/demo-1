@@ -1,3 +1,28 @@
+export interface AppNotification {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  read: boolean;
+}
+
+export const INITIAL_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: "notif-1",
+    title: "New Enterprise Order",
+    description: "Olivia Martin completed $1,999.00 payment",
+    time: "10m ago",
+    read: false,
+  },
+  {
+    id: "notif-2",
+    title: "System Health Normal",
+    description: "All cloud clusters operational at 99.98% uptime",
+    time: "1h ago",
+    read: false,
+  },
+];
+
 export interface Customer {
   name: string;
   email: string;

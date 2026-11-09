@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Transaction, TransactionStatus } from "@/lib/mock-data";
+import { openPrintableInvoice } from "@/lib/export-utils";
 
 export interface OrderDetailSheetProps {
   transaction: Transaction | null;
@@ -36,8 +37,9 @@ export function OrderDetailSheet({
   };
 
   const handleDownloadInvoice = () => {
-    toast.success(`Invoice for ${transaction.id} downloaded`, {
-      description: `Sent PDF export to downloads folder`,
+    openPrintableInvoice(transaction);
+    toast.success(`Invoice generated for ${transaction.id}`, {
+      description: `Official invoice opened for print or PDF download`,
     });
   };
 

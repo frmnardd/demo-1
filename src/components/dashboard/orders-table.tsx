@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   RefreshCcw,
   X,
+  Trash2,
 } from "lucide-react";
 import {
   Table,
@@ -43,12 +44,14 @@ export interface OrdersTableProps {
   transactions: Transaction[];
   onSelectTransaction: (transaction: Transaction) => void;
   onStatusChange: (id: string, newStatus: TransactionStatus) => void;
+  onDeleteOrder?: (id: string) => void;
 }
 
 export function OrdersTable({
   transactions,
   onSelectTransaction,
   onStatusChange,
+  onDeleteOrder,
 }: OrdersTableProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
@@ -239,11 +242,23 @@ export function OrdersTable({
                         {tx.status !== "refunded" && (
                           <DropdownMenuItem
                             onClick={() => onStatusChange(tx.id, "refunded")}
-                            className="text-destructive focus:text-destructive"
+                            className="text-amber-600 focus:text-amber-600"
                           >
                             <RefreshCcw className="mr-2 h-4 w-4" />
                             Refund Order
                           </DropdownMenuItem>
+                        )}
+                        {onDeleteOrder && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => onDeleteOrder(tx.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Order
+                            </DropdownMenuItem>
+                          </>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
