@@ -10,6 +10,27 @@ export interface AggregatedCustomer {
   status: "VIP" | "Active" | "New";
 }
 
+export function formatDataAsJSON(data: unknown): string {
+  return JSON.stringify(data, null, 2);
+}
+
+export function triggerJSONDownload(filename: string, data: unknown): void {
+  if (typeof window === "undefined") return;
+
+  const jsonContent = formatDataAsJSON(data);
+  const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.setAttribute("href", url);
+  link.setAttribute("download", `${filename}.json`);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export function formatTransactionsAsCSV(transactions: Transaction[]): string {
   const headers = [
     "Order ID",
