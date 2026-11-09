@@ -7,11 +7,11 @@ import {
   ShoppingCart,
   Users,
   Settings,
-  Zap,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FixentraLogo } from "@/components/brand/fixentra-logo";
 
 interface SidebarProps {
   activeSection: string;
@@ -22,7 +22,8 @@ interface SidebarProps {
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard, badge: null },
-  { id: "analytics", label: "Analytics", icon: BarChart3, badge: "New" },
+  { id: "products", label: "Products", icon: Package, badge: "v2.0" },
+  { id: "analytics", label: "Analytics", icon: BarChart3, badge: null },
   { id: "orders", label: "Orders", icon: ShoppingCart, badge: "10" },
   { id: "customers", label: "Customers", icon: Users, badge: null },
   { id: "settings", label: "Settings", icon: Settings, badge: null },
@@ -43,19 +44,8 @@ export function Sidebar({
     >
       <div className="space-y-6">
         {/* Brand / Logo */}
-        <div className="flex items-center gap-2.5 px-2 py-1.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Zap className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-base tracking-tight text-foreground flex items-center gap-1.5">
-              Acme Flow
-              <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 border-primary/30 text-primary">
-                PRO
-              </Badge>
-            </span>
-            <span className="text-xs text-muted-foreground">SaaS Operations Suite</span>
-          </div>
+        <div className="px-2 py-1.5">
+          <FixentraLogo />
         </div>
 
         {/* Navigation Section */}

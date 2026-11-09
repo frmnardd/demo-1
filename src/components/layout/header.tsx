@@ -10,6 +10,7 @@ import {
   LogOut,
   CreditCard,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -33,6 +34,9 @@ interface HeaderProps {
   notifications?: AppNotification[];
   onMarkAllNotificationsRead?: () => void;
   onDismissNotification?: (id: string) => void;
+  onOpenCopilot?: () => void;
+  onLogout?: () => void;
+  currentUser?: string;
 }
 
 export function Header({
@@ -42,6 +46,9 @@ export function Header({
   notifications = [],
   onMarkAllNotificationsRead,
   onDismissNotification,
+  onOpenCopilot,
+  onLogout,
+  currentUser = "ardfrmn",
 }: HeaderProps) {
   const unreadCount = notifications.filter((n) => !n.read).length;
   return (
@@ -71,14 +78,30 @@ export function Header({
 
       {/* Right Controls: Search Trigger, Notifications, Theme, Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Fixentra AI Copilot Button */}
+        {onOpenCopilot && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenCopilot}
+            className="h-9 gap-1.5 border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground text-xs font-medium shadow-sm transition-all"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="hidden lg:inline">Fixentra AI</span>
+            <kbd className="hidden sm:inline-flex pointer-events-none h-4 select-none items-center rounded border bg-background/50 px-1 font-mono text-[9px] text-muted-foreground">
+              ⌘J
+            </kbd>
+          </Button>
+        )}
+
         {/* Search trigger button */}
         <button
           onClick={onOpenCommandPalette}
-          className="flex h-9 w-40 sm:w-60 items-center justify-between rounded-md border border-input bg-muted/40 px-3 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          className="flex h-9 w-36 sm:w-56 items-center justify-between rounded-md border border-input bg-muted/40 px-3 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
           <div className="flex items-center gap-2 truncate">
             <Search className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">Search commands...</span>
+            <span className="truncate">Search...</span>
           </div>
           <kbd className="hidden sm:inline-flex pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
             <span className="text-xs">⌘</span>K
@@ -170,9 +193,9 @@ export function Header({
               className="relative h-9 w-9 rounded-full p-0"
               aria-label="User account menu"
             >
-              <Avatar className="h-9 w-9 border">
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
-                  FA
+              <Avatar className="h-9 w-9 border border-primary/20">
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-xs">
+                  {currentUser.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -180,9 +203,9 @@ export function Header({
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Firman Ardiansyah</p>
+                <p className="text-sm font-semibold leading-none">{currentUser}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  admin@acmeflow.dev
+                  {currentUser}@fixentra.my.id
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -193,7 +216,7 @@ export function Header({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toast.info("Billing & plan management")}>
               <CreditCard className="mr-2 h-4 w-4" />
-              <span>Billing & Plan</span>
+              <span>Fixentra License</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toast.info("Team preferences")}>
               <Settings className="mr-2 h-4 w-4" />
@@ -201,11 +224,17 @@ export function Header({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => toast.success("Signed out of demo session")}
-              className="text-destructive focus:text-destructive"
+              onClick={() => {
+                if (onLogout) {
+                  onLogout();
+                } else {
+                  toast.success("Signed out of session");
+                }
+              }}
+              className="text-destructive focus:text-destructive cursor-pointer"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <span>Log out (Lock Session)</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

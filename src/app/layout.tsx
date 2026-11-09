@@ -4,9 +4,9 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Acme Flow - Operations & Analytics Dashboard",
+  title: "Fixentra - Enterprise Operations Suite v2.0",
   description:
-    "An interactive, production-grade SaaS Operations & Analytics dashboard.",
+    "Official Fixentra Operations, AI Copilot, and Financial Intelligence Platform on fixentra.my.id",
 };
 
 export default function RootLayout({
