@@ -4,9 +4,9 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PulseSaaS - Modern shadcn/ui Dashboard Demo",
+  title: "Acme Flow - Operations & Analytics Dashboard",
   description:
-    "An interactive, production-grade SaaS Operations & Analytics dashboard demonstrating shadcn/ui components, charts, and dark mode.",
+    "An interactive, production-grade SaaS Operations & Analytics dashboard.",
 };
 
 export default function RootLayout({

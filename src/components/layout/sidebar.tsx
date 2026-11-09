@@ -8,8 +8,6 @@ import {
   Users,
   Settings,
   Zap,
-  Sparkles,
-  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -103,26 +101,18 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* Bottom Pro Card */}
-      <div className="rounded-xl border bg-gradient-to-b from-primary/10 to-transparent p-3.5 space-y-2">
-        <div className="flex items-center gap-2 text-primary text-xs font-semibold">
-          <Sparkles className="h-4 w-4" />
-          <span>shadcn/ui Showcase</span>
+      {/* Bottom Status Card */}
+      <div className="rounded-xl border bg-muted/30 p-3 space-y-1.5">
+        <div className="flex items-center justify-between text-xs font-medium">
+          <span className="text-muted-foreground">System Status</span>
+          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Operational
+          </span>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Built with accessible Radix primitives, Tailwind CSS variables, and fluid themes.
+        <p className="text-[11px] text-muted-foreground/80">
+          All services and APIs running smoothly.
         </p>
-        <div className="pt-1">
-          <a
-            href="https://ui.shadcn.com"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-between text-xs font-medium text-primary hover:underline"
-          >
-            Explore Component Docs
-            <ChevronRight className="h-3 w-3" />
-          </a>
-        </div>
       </div>
     </aside>
   );

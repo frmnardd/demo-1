@@ -127,7 +127,7 @@ export default function DashboardPage() {
                 </span>
               </h2>
               <p className="text-sm text-muted-foreground">
-                Real-time metrics, interactive charts, and transactions powered by shadcn/ui.
+                Real-time business metrics, interactive charts, and transactions.
               </p>
             </div>
 
