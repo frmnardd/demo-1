@@ -283,9 +283,9 @@ export function DeveloperPortal({
                 <thead>
                   <tr className="border-b text-xs text-muted-foreground">
                     <th className="pb-3 font-medium">Key Name</th>
-                    <th className="pb-3 font-medium">Key Prefix</th>
+                    <th className="pb-3 font-medium hidden sm:table-cell">Key Prefix</th>
                     <th className="pb-3 font-medium">Permissions</th>
-                    <th className="pb-3 font-medium">Created</th>
+                    <th className="pb-3 font-medium hidden md:table-cell">Created</th>
                     <th className="pb-3 font-medium">Status</th>
                     <th className="pb-3 font-medium text-right">Actions</th>
                   </tr>
@@ -294,9 +294,12 @@ export function DeveloperPortal({
                   {apiKeys.map((k) => (
                     <tr key={k.id} className="hover:bg-muted/50 transition-colors">
                       <td className="py-3 font-medium text-foreground">
-                        {k.name}
+                        <div>{k.name}</div>
+                        <div className="text-[10px] font-mono text-muted-foreground sm:hidden mt-0.5">
+                          {k.keyPrefix} &bull; {k.createdAt}
+                        </div>
                       </td>
-                      <td className="py-3 font-mono text-muted-foreground">
+                      <td className="py-3 font-mono text-muted-foreground hidden sm:table-cell">
                         {k.keyPrefix}
                       </td>
                       <td className="py-3">
@@ -312,7 +315,7 @@ export function DeveloperPortal({
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 text-muted-foreground">{k.createdAt}</td>
+                      <td className="py-3 text-muted-foreground hidden md:table-cell">{k.createdAt}</td>
                       <td className="py-3">
                         {k.active ? (
                           <Badge variant="outline" className="text-emerald-600 border-emerald-500/30 bg-emerald-500/5 text-[10px]">
@@ -382,18 +385,23 @@ export function DeveloperPortal({
                 <thead>
                   <tr className="border-b text-muted-foreground">
                     <th className="pb-2.5 font-medium">Name</th>
-                    <th className="pb-2.5 font-medium">Target URL</th>
+                    <th className="pb-2.5 font-medium hidden sm:table-cell">Target URL</th>
                     <th className="pb-2.5 font-medium">Events</th>
-                    <th className="pb-2.5 font-medium">Signing Secret</th>
-                    <th className="pb-2.5 font-medium">Last Delivery</th>
+                    <th className="pb-2.5 font-medium hidden lg:table-cell">Signing Secret</th>
+                    <th className="pb-2.5 font-medium hidden md:table-cell">Last Delivery</th>
                     <th className="pb-2.5 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y text-xs">
                   {webhooks.map((wh) => (
                     <tr key={wh.id} className="hover:bg-muted/50 transition-colors">
-                      <td className="py-3 font-semibold text-foreground">{wh.name}</td>
-                      <td className="py-3 font-mono text-[11px] text-muted-foreground">{wh.url}</td>
+                      <td className="py-3 font-semibold text-foreground">
+                        <div>{wh.name}</div>
+                        <div className="font-mono text-[10px] text-muted-foreground sm:hidden truncate max-w-[150px] font-normal mt-0.5">
+                          {wh.url}
+                        </div>
+                      </td>
+                      <td className="py-3 font-mono text-[11px] text-muted-foreground hidden sm:table-cell">{wh.url}</td>
                       <td className="py-3">
                         <div className="flex flex-wrap gap-1">
                           {wh.events.map((ev) => (
@@ -403,10 +411,10 @@ export function DeveloperPortal({
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 font-mono text-[11px] text-muted-foreground">
+                      <td className="py-3 font-mono text-[11px] text-muted-foreground hidden lg:table-cell">
                         {wh.secretKey.slice(0, 10)}...••••
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 hidden md:table-cell">
                         {wh.lastDeliveredAt ? (
                           <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -526,7 +534,7 @@ console.log("Order created:", data);`}
 
       {/* Key Generation Modal Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Generate Production API Key</DialogTitle>
             <DialogDescription className="text-xs">
@@ -596,7 +604,7 @@ console.log("Order created:", data);`}
 
       {/* Webhook Creation Modal Dialog */}
       <Dialog open={isWebhookOpen} onOpenChange={setIsWebhookOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Webhook Subscription</DialogTitle>
             <DialogDescription className="text-xs">

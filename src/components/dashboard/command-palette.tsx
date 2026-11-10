@@ -33,6 +33,8 @@ export interface CommandPaletteProps {
   onOpenChange: (open: boolean) => void;
   onOpenNewOrder: () => void;
   onNavigateSection?: (sectionId: string) => void;
+  onExportCsv?: () => void;
+  onRefreshData?: () => void;
 }
 
 export function CommandPalette({
@@ -40,6 +42,8 @@ export function CommandPalette({
   onOpenChange,
   onOpenNewOrder,
   onNavigateSection,
+  onExportCsv,
+  onRefreshData,
 }: CommandPaletteProps) {
   const { setTheme } = useTheme();
 
@@ -80,9 +84,13 @@ export function CommandPalette({
           <CommandItem
             onSelect={() =>
               runCommand(() => {
-                toast.success("Data refreshed", {
-                  description: "Dashboard metrics and charts synchronized.",
-                });
+                if (onRefreshData) {
+                  onRefreshData();
+                } else {
+                  toast.success("Data refreshed", {
+                    description: "Dashboard metrics and charts synchronized.",
+                  });
+                }
               })
             }
           >
@@ -92,9 +100,13 @@ export function CommandPalette({
           <CommandItem
             onSelect={() =>
               runCommand(() => {
-                toast.success("CSV export ready", {
-                  description: "Full transaction audit exported to CSV.",
-                });
+                if (onExportCsv) {
+                  onExportCsv();
+                } else {
+                  toast.success("CSV export ready", {
+                    description: "Full transaction audit exported to CSV.",
+                  });
+                }
               })
             }
           >

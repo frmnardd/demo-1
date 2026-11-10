@@ -21,12 +21,12 @@ export function ChartsSection() {
   const revenueData = REVENUE_ANALYTICS[timeframe] || REVENUE_ANALYTICS["7d"];
 
   return (
-    <div className="grid gap-4 md:grid-cols-7">
-      <Card className="col-span-4 transition-all">
+    <div className="grid gap-4 grid-cols-1 md:grid-cols-7">
+      <Card className="col-span-1 md:col-span-4 transition-all">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-4">
           <div>
             <CardTitle className="text-base font-semibold">Revenue Overview</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs">
               Track total earnings vs operational expenses over time
             </CardDescription>
           </div>
@@ -34,7 +34,7 @@ export function ChartsSection() {
             value={timeframe}
             onValueChange={(val) => setTimeframe(val as "7d" | "30d" | "12m")}
           >
-            <TabsList className="grid grid-cols-3 h-8 w-[180px]">
+            <TabsList className="grid grid-cols-3 h-8 w-full sm:w-[180px]">
               <TabsTrigger value="7d" className="text-xs">
                 7 Days
               </TabsTrigger>
@@ -131,10 +131,10 @@ export function ChartsSection() {
         </CardContent>
       </Card>
 
-      <Card className="col-span-3 transition-all">
+      <Card className="col-span-1 md:col-span-3 transition-all">
         <CardHeader>
           <CardTitle className="text-base font-semibold">Sales by Product Tier</CardTitle>
-          <CardDescription>Breakdown across commercial subscription segments</CardDescription>
+          <CardDescription className="text-xs">Breakdown across commercial subscription segments</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[280px] w-full">
@@ -142,7 +142,7 @@ export function ChartsSection() {
               <BarChart
                 data={CATEGORY_SALES}
                 layout="vertical"
-                margin={{ top: 0, right: 20, left: 20, bottom: 0 }}
+                margin={{ top: 0, right: 10, left: 10, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                 <XAxis
@@ -157,10 +157,10 @@ export function ChartsSection() {
                   dataKey="category"
                   type="category"
                   stroke="hsl(var(--muted-foreground))"
-                  fontSize={11}
+                  fontSize={10}
                   tickLine={false}
                   axisLine={false}
-                  width={90}
+                  width={75}
                 />
                 <Tooltip
                   content={({ active, payload }) => {

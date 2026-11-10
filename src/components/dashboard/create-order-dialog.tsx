@@ -120,7 +120,7 @@ export function CreateOrderDialog({
       if (!v) resetForm();
       onOpenChange(v);
     }}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create New Order</DialogTitle>

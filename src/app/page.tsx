@@ -920,6 +920,18 @@ export default function FixentraApp() {
           setActiveSection(sectionId);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
+        onExportCsv={() => {
+          triggerCSVDownload(transactions);
+          toast.success("CSV export downloaded", {
+            description: `Exported ${transactions.length} commercial transactions.`,
+          });
+        }}
+        onRefreshData={() => {
+          handleResyncDatabase();
+          toast.success("Transactions synchronized", {
+            description: "SQLite ledger re-indexed successfully.",
+          });
+        }}
       />
 
       {/* Mobile Sticky Bottom Navigation Bar */}

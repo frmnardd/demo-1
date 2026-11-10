@@ -248,10 +248,10 @@ export function TeamView({ team, onAddMember, onRevokeMember }: TeamViewProps) {
               <thead>
                 <tr className="border-b text-xs text-muted-foreground">
                   <th className="pb-3 font-medium">Name</th>
-                  <th className="pb-3 font-medium">Username</th>
-                  <th className="pb-3 font-medium">Corporate Email</th>
+                  <th className="pb-3 font-medium hidden sm:table-cell">Username</th>
+                  <th className="pb-3 font-medium hidden md:table-cell">Corporate Email</th>
                   <th className="pb-3 font-medium">Role</th>
-                  <th className="pb-3 font-medium">Joined Date</th>
+                  <th className="pb-3 font-medium hidden lg:table-cell">Joined Date</th>
                   <th className="pb-3 font-medium">Status</th>
                   <th className="pb-3 font-medium text-right">Actions</th>
                 </tr>
@@ -260,16 +260,19 @@ export function TeamView({ team, onAddMember, onRevokeMember }: TeamViewProps) {
                 {team.map((member) => (
                   <tr key={member.id} className="hover:bg-muted/50 transition-colors">
                     <td className="py-3 font-medium text-foreground">
-                      {member.name}
+                      <div>{member.name}</div>
+                      <div className="text-[11px] font-normal text-muted-foreground sm:hidden font-mono mt-0.5">
+                        @{member.username} &bull; {member.email}
+                      </div>
                     </td>
-                    <td className="py-3 font-mono text-muted-foreground">
+                    <td className="py-3 font-mono text-muted-foreground hidden sm:table-cell">
                       @{member.username}
                     </td>
-                    <td className="py-3 text-muted-foreground">
+                    <td className="py-3 text-muted-foreground hidden md:table-cell">
                       {member.email}
                     </td>
                     <td className="py-3">{getRoleBadge(member.role)}</td>
-                    <td className="py-3 text-muted-foreground">{member.joinedAt}</td>
+                    <td className="py-3 text-muted-foreground hidden lg:table-cell">{member.joinedAt}</td>
                     <td className="py-3">
                       {member.active ? (
                         <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
@@ -307,7 +310,7 @@ export function TeamView({ team, onAddMember, onRevokeMember }: TeamViewProps) {
 
       {/* Provision Member Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Provision Team Member</DialogTitle>
             <DialogDescription className="text-xs">

@@ -20,13 +20,13 @@ export function InvoiceContent({ transaction, onPrint }: InvoiceContentProps) {
   const isPending = (transaction.status || "").toLowerCase() === "pending";
 
   return (
-    <div className="p-8 space-y-6 bg-card text-foreground print:p-0">
+    <div className="p-4 sm:p-8 space-y-5 sm:space-y-6 bg-card text-foreground print:p-0 max-h-[85vh] overflow-y-auto">
       {/* Top Bar Actions (Hidden during print) */}
       <div className="flex items-center justify-between border-b pb-4 print:hidden">
-        <span className="text-xs font-mono text-muted-foreground">
+        <span className="text-xs font-mono text-muted-foreground truncate">
           Official Tax Invoice &bull; {invoiceNo}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {onPrint && (
             <Button size="sm" variant="outline" onClick={onPrint} className="h-8 gap-1.5 text-xs">
               <Printer className="h-3.5 w-3.5" />
@@ -37,7 +37,7 @@ export function InvoiceContent({ transaction, onPrint }: InvoiceContentProps) {
       </div>
 
       {/* Invoice Header */}
-      <div className="flex justify-between items-start gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-sm">
@@ -53,7 +53,7 @@ export function InvoiceContent({ transaction, onPrint }: InvoiceContentProps) {
           </p>
         </div>
 
-        <div className="text-right space-y-1">
+        <div className="text-left sm:text-right space-y-1">
           <h3 className="text-base font-bold text-foreground">COMMERCIAL INVOICE</h3>
           <p className="font-mono text-xs text-primary font-semibold">{invoiceNo}</p>
           <p className="text-xs text-muted-foreground">Issue Date: {transaction.date}</p>
@@ -79,7 +79,7 @@ export function InvoiceContent({ transaction, onPrint }: InvoiceContentProps) {
       </div>
 
       {/* Bill-To & Payment Details */}
-      <div className="grid grid-cols-2 gap-6 rounded-lg border bg-muted/20 p-4 text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 rounded-lg border bg-muted/20 p-4 text-xs">
         <div className="space-y-1">
           <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
             Billed To
@@ -87,7 +87,7 @@ export function InvoiceContent({ transaction, onPrint }: InvoiceContentProps) {
           <p className="font-semibold text-foreground text-sm">{transaction.customer.name}</p>
           <p className="text-muted-foreground">{transaction.customer.email}</p>
         </div>
-        <div className="space-y-1 text-right">
+        <div className="space-y-1 text-left sm:text-right">
           <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
             Payment Channel
           </span>

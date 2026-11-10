@@ -215,7 +215,7 @@ export function ProductsView({
 
       {/* Add Product Modal Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleCreate}>
             <DialogHeader>
               <DialogTitle>Add Product or License Tier</DialogTitle>

@@ -116,10 +116,10 @@ export function AnalyticsView() {
           <div className="rounded-md border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableRow className="bg-muted/40 hover:bg-muted/40 text-xs">
                   <TableHead>Month</TableHead>
                   <TableHead>Gross Revenue</TableHead>
-                  <TableHead>Operating Expenses</TableHead>
+                  <TableHead className="hidden sm:table-cell">Operating Expenses</TableHead>
                   <TableHead>Net Profit</TableHead>
                   <TableHead className="text-right">Profit Margin</TableHead>
                 </TableRow>
@@ -129,17 +129,22 @@ export function AnalyticsView() {
                   const profit = d.revenue - d.expenses;
                   const margin = ((profit / d.revenue) * 100).toFixed(1);
                   return (
-                    <TableRow key={d.date} className="hover:bg-muted/50">
+                    <TableRow key={d.date} className="hover:bg-muted/50 text-xs">
                       <TableCell className="font-semibold">{d.date}</TableCell>
-                      <TableCell className="font-mono">${d.revenue.toLocaleString()}</TableCell>
-                      <TableCell className="font-mono text-muted-foreground">
+                      <TableCell className="font-mono">
+                        <div>${d.revenue.toLocaleString()}</div>
+                        <div className="text-[10px] text-muted-foreground sm:hidden font-normal">
+                          Exp: ${d.expenses.toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-muted-foreground hidden sm:table-cell">
                         ${d.expenses.toLocaleString()}
                       </TableCell>
                       <TableCell className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
                         +${profit.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right font-mono font-semibold">
-                        <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
+                        <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px]">
                           {margin}%
                         </Badge>
                       </TableCell>
