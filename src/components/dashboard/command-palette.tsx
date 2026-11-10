@@ -12,6 +12,9 @@ import {
   Settings,
   CreditCard,
   FileSpreadsheet,
+  User,
+  Key,
+  Users,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -117,17 +120,6 @@ export function CommandPalette({
           <CommandItem
             onSelect={() =>
               runCommand(() => {
-                onNavigateSection?.("charts");
-                toast.info("Navigated to Analytics Charts");
-              })
-            }
-          >
-            <BarChart3 className="mr-2 h-4 w-4" />
-            <span>Revenue & Sales Charts</span>
-          </CommandItem>
-          <CommandItem
-            onSelect={() =>
-              runCommand(() => {
                 onNavigateSection?.("orders");
                 toast.info("Navigated to Recent Orders Table");
               })
@@ -139,7 +131,41 @@ export function CommandPalette({
           <CommandItem
             onSelect={() =>
               runCommand(() => {
-                toast.info("Settings modal / page opened");
+                onNavigateSection?.("developers");
+                toast.info("Navigated to Developers API");
+              })
+            }
+          >
+            <Key className="mr-2 h-4 w-4" />
+            <span>Developer API Keys & Webhooks</span>
+          </CommandItem>
+          <CommandItem
+            onSelect={() =>
+              runCommand(() => {
+                onNavigateSection?.("team");
+                toast.info("Navigated to Team & RBAC");
+              })
+            }
+          >
+            <Users className="mr-2 h-4 w-4" />
+            <span>Team & Access Control</span>
+          </CommandItem>
+          <CommandItem
+            onSelect={() =>
+              runCommand(() => {
+                onNavigateSection?.("profile");
+                toast.info("Navigated to Profile Settings");
+              })
+            }
+          >
+            <User className="mr-2 h-4 w-4" />
+            <span>Profile & Account</span>
+          </CommandItem>
+          <CommandItem
+            onSelect={() =>
+              runCommand(() => {
+                onNavigateSection?.("settings");
+                toast.info("Navigated to Workspace Settings");
               })
             }
           >

@@ -24,7 +24,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-
 import { AppNotification } from "@/lib/mock-data";
 
 interface HeaderProps {
@@ -37,6 +36,12 @@ interface HeaderProps {
   onOpenCopilot?: () => void;
   onLogout?: () => void;
   currentUser?: string;
+  userProfile?: {
+    name: string;
+    email: string;
+    role?: string;
+  };
+  onNavigateSection?: (sectionId: string) => void;
 }
 
 export function Header({
@@ -49,8 +54,14 @@ export function Header({
   onOpenCopilot,
   onLogout,
   currentUser = "ardfrmn",
+  userProfile,
+  onNavigateSection,
 }: HeaderProps) {
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const displayName = userProfile?.name || currentUser;
+  const displayEmail = userProfile?.email || `${currentUser}@fixentra.my.id`;
+  const initials = displayName.slice(0, 2).toUpperCase();
+
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/80 backdrop-blur-md px-4 sm:px-6">
       {/* Left: Mobile Menu Toggle & Title */}
@@ -195,7 +206,7 @@ export function Header({
             >
               <Avatar className="h-9 w-9 border border-primary/20">
                 <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-xs">
-                  {currentUser.slice(0, 2).toUpperCase()}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -203,22 +214,46 @@ export function Header({
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-semibold leading-none">{currentUser}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {currentUser}@fixentra.my.id
+                <p className="text-sm font-semibold leading-none">{displayName}</p>
+                <p className="text-xs leading-none text-muted-foreground truncate">
+                  {displayEmail}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => toast.info("Profile settings opened")}>
+            <DropdownMenuItem
+              onClick={() => {
+                if (onNavigateSection) {
+                  onNavigateSection("profile");
+                }
+                toast.info("Navigated to Profile Settings");
+              }}
+              className="cursor-pointer"
+            >
               <User className="mr-2 h-4 w-4" />
               <span>Profile Settings</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.info("Billing & plan management")}>
+            <DropdownMenuItem
+              onClick={() => {
+                if (onNavigateSection) {
+                  onNavigateSection("products");
+                }
+                toast.info("Navigated to License & Catalog");
+              }}
+              className="cursor-pointer"
+            >
               <CreditCard className="mr-2 h-4 w-4" />
               <span>Fixentra License</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.info("Team preferences")}>
+            <DropdownMenuItem
+              onClick={() => {
+                if (onNavigateSection) {
+                  onNavigateSection("settings");
+                }
+                toast.info("Navigated to Workspace Settings");
+              }}
+              className="cursor-pointer"
+            >
               <Settings className="mr-2 h-4 w-4" />
               <span>Workspace Settings</span>
             </DropdownMenuItem>

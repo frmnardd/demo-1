@@ -10,7 +10,7 @@ import { ChartsSection } from "@/components/dashboard/charts-section";
 import { OrdersTable } from "@/components/dashboard/orders-table";
 import { CustomersView } from "@/components/dashboard/customers-view";
 import { AnalyticsView } from "@/components/dashboard/analytics-view";
-import { SettingsView } from "@/components/dashboard/settings-view";
+import { SettingsView, UserProfileData } from "@/components/dashboard/settings-view";
 import { ProductsView } from "@/components/dashboard/products-view";
 import { DeveloperPortal } from "@/components/dashboard/developer-portal";
 import { TeamView, TeamMember } from "@/components/dashboard/team-view";
@@ -110,10 +110,19 @@ const INITIAL_TEAM: TeamMember[] = [
   },
 ];
 
+const DEFAULT_USER_PROFILE: UserProfileData = {
+  name: "Firman Ardiansyah",
+  email: "firman@fixentra.my.id",
+  role: "Super Administrator",
+  department: "Core Architecture & Engineering",
+  bio: "Lead platform architect and enterprise administrator for Fixentra Core.",
+};
+
 export default function FixentraApp() {
   const [mounted, setMounted] = React.useState(false);
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState("ardfrmn");
+  const [userProfile, setUserProfile] = React.useState<UserProfileData>(DEFAULT_USER_PROFILE);
 
   // Core Data States
   const [activeSection, setActiveSection] = React.useState("overview");
@@ -155,12 +164,50 @@ export default function FixentraApp() {
 
       const storedTeam = localStorage.getItem("fixentra_team_members");
       if (storedTeam) setTeamMembers(JSON.parse(storedTeam));
+
+      const storedProfile = localStorage.getItem("fixentra_user_profile");
+      if (storedProfile) {
+        setUserProfile(JSON.parse(storedProfile));
+      }
     } catch {
       // ignore parse errors
     }
 
     setMounted(true);
   }, []);
+
+  const handleUpdateProfile = (updated: UserProfileData) => {
+    setUserProfile(updated);
+    try {
+      localStorage.setItem("fixentra_user_profile", JSON.stringify(updated));
+    } catch {
+      // ignore storage error
+    }
+    setAuditLogs((prev) => [
+      createAuditEntry(
+        "PROFILE_UPDATED",
+        `User profile identity updated for ${updated.name}`,
+        currentUser
+      ),
+      ...prev,
+    ]);
+  };
+
+  const handleUpdatePassword = (newPasswordHash: string) => {
+    try {
+      localStorage.setItem(`fixentra_pwd_${currentUser}`, newPasswordHash);
+    } catch {
+      // ignore storage error
+    }
+    setAuditLogs((prev) => [
+      createAuditEntry(
+        "PASSWORD_CHANGED",
+        `Administrative credentials updated for ${currentUser}`,
+        currentUser
+      ),
+      ...prev,
+    ]);
+  };
 
   const handleLoginSuccess = (user: string) => {
     setIsAuthenticated(true);
@@ -549,8 +596,28 @@ export default function FixentraApp() {
             onRevokeMember={handleRevokeTeamMember}
           />
         );
+      case "profile":
+        return (
+          <SettingsView
+            initialTab="profile"
+            currentUser={currentUser}
+            userProfile={userProfile}
+            onUpdateProfile={handleUpdateProfile}
+            onUpdatePassword={handleUpdatePassword}
+            onResyncDatabase={handleResyncDatabase}
+          />
+        );
       case "settings":
-        return <SettingsView onResyncDatabase={handleResyncDatabase} currentUser={currentUser} />;
+        return (
+          <SettingsView
+            initialTab="workspace"
+            currentUser={currentUser}
+            userProfile={userProfile}
+            onUpdateProfile={handleUpdateProfile}
+            onUpdatePassword={handleUpdatePassword}
+            onResyncDatabase={handleResyncDatabase}
+          />
+        );
       case "orders":
         return (
           <div className="space-y-4">
@@ -673,6 +740,11 @@ export default function FixentraApp() {
           onOpenCopilot={() => setCopilotOpen(true)}
           onLogout={handleLogout}
           currentUser={currentUser}
+          userProfile={userProfile}
+          onNavigateSection={(sec) => {
+            setActiveSection(sec);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
           notifications={notifications}
           onMarkAllNotificationsRead={() =>
             setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))

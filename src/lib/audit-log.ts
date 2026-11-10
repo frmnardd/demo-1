@@ -12,6 +12,8 @@ export type AuditEventType =
   | "API_KEY_REVOKED"
   | "TEAM_MEMBER_PROVISIONED"
   | "TEAM_MEMBER_DEACTIVATED"
+  | "PROFILE_UPDATED"
+  | "PASSWORD_CHANGED"
   | "LEDGER_RESYNC";
 
 export interface AuditLogEntry {

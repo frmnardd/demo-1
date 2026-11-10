@@ -9,6 +9,7 @@ import {
   Settings,
   Package,
   Terminal,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ const navItems = [
   { id: "customers", label: "Customers", icon: Users, badge: null },
   { id: "developers", label: "Developers", icon: Terminal, badge: "v3.0" },
   { id: "team", label: "Team & RBAC", icon: Users, badge: null },
+  { id: "profile", label: "Profile", icon: User, badge: null },
   { id: "settings", label: "Settings", icon: Settings, badge: null },
 ];
 
