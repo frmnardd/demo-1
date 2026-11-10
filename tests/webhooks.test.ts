@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
   generateWebhookSecret,
-  signWebhookPayload,
-  verifyWebhookSignature,
   validateWebhookInput,
 } from "../src/lib/webhooks";
+import {
+  signWebhookPayload,
+  verifyWebhookSignature,
+} from "../src/lib/webhooks-server";
 
 describe("Enterprise Webhooks Engine", () => {
   it("generates secret key starting with whsec_", () => {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma, ensureDatabaseSeeded } from "@/lib/db";
-import { generateApiKeySecret } from "@/lib/crypto";
+import { generateServerApiKeySecret } from "@/lib/server-crypto";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { sanitizeObject } from "@/lib/sanitize";
 
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, permissions } = sanitizeObject(parsed.data);
-    const { secretKey, keyPrefix, keyHash } = generateApiKeySecret();
+    const { secretKey, keyPrefix, keyHash } = generateServerApiKeySecret();
 
     const created = await prisma.apiKey.create({
       data: {

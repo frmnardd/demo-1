@@ -226,7 +226,7 @@ export function SettingsView({
     let storedHash = localStorage.getItem("fixentra_admin_password_hash");
     if (!storedHash) {
       // Default initial password hash for firman173
-      storedHash = hashPassword("firman173");
+      storedHash = "$2b$10$laq.T9okA2lbUDneiiVxW.VCpZjICRWAteSq8N2DHsh4.YaBKhJNe";
     }
 
     const isMatch = verifyPassword(currentPassword, storedHash);

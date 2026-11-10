@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import { generateRandomHex } from "./crypto";
 
 export type WebhookEvent = "order.created" | "order.paid" | "order.failed" | "order.deleted";
 
@@ -15,35 +15,16 @@ export interface WebhookRecord {
 }
 
 /**
- * Generates an enterprise HMAC secret starting with whsec_
+ * Generates an enterprise HMAC secret starting with whsec_.
+ * Client-safe using Web Crypto API.
  */
 export function generateWebhookSecret(): string {
-  const bytes = crypto.randomBytes(24).toString("hex");
-  return `whsec_${bytes}`;
+  const hex = generateRandomHex(24);
+  return `whsec_${hex}`;
 }
 
 /**
- * Signs a payload body using HMAC-SHA256
- */
-export function signWebhookPayload(payload: string, secret: string): string {
-  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
-}
-
-/**
- * Verifies an incoming HMAC-SHA256 signature
- */
-export function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
-  if (!payload || !signature || !secret) return false;
-  try {
-    const expected = signWebhookPayload(payload, secret);
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Validates webhook configuration input
+ * Validates webhook configuration input.
  */
 export function validateWebhookInput(input: {
   name?: string;
@@ -51,24 +32,24 @@ export function validateWebhookInput(input: {
   events?: string[];
 }): { valid: boolean; error?: string } {
   if (!input.name || input.name.trim().length === 0) {
-    return { valid: false, error: "Webhook identifier/name cannot be empty." };
+    return { valid: false, error: "Webhook endpoint name cannot be empty." };
   }
 
-  if (!input.url) {
-    return { valid: false, error: "Target URL cannot be empty." };
+  if (!input.url || input.url.trim().length === 0) {
+    return { valid: false, error: "Target URL endpoint is required." };
   }
 
   try {
-    const parsedUrl = new URL(input.url);
-    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-      return { valid: false, error: "Webhook URL must use HTTP or HTTPS protocol." };
+    const parsed = new URL(input.url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return { valid: false, error: "Target URL must begin with http:// or https://" };
     }
   } catch {
-    return { valid: false, error: "Invalid Webhook URL format." };
+    return { valid: false, error: "Please enter a valid HTTP/HTTPS URL." };
   }
 
   if (!input.events || input.events.length === 0) {
-    return { valid: false, error: "Please select at least one trigger event." };
+    return { valid: false, error: "Select at least one subscribed event topic." };
   }
 
   return { valid: true };

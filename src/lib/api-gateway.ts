@@ -1,4 +1,4 @@
-import { hashApiKey } from "./crypto";
+import { hashApiKey } from "./server-crypto";
 import { prisma } from "./db";
 
 export type ApiScope = "read:orders" | "write:orders" | "read:analytics";

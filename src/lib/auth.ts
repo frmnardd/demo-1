@@ -1,8 +1,8 @@
 import { hashPassword, verifyPassword } from "./crypto";
 
 export const VALID_USER = "ardfrmn";
-// Default admin bcrypt hash generated securely
-const ADMIN_HASH = hashPassword("firman173");
+// Precomputed admin bcrypt hash for 'firman173' (10 salt rounds)
+const ADMIN_HASH = "$2b$10$laq.T9okA2lbUDneiiVxW.VCpZjICRWAteSq8N2DHsh4.YaBKhJNe";
 const AUTH_KEY = "fixentra_auth_session";
 
 export type UserRole = "SUPER_ADMIN" | "FINANCE_MANAGER" | "OPERATOR";
