@@ -185,9 +185,7 @@ export function DeveloperPortal({
   };
 
   const sampleKeyDisplay =
-    apiKeys.length > 0 && apiKeys[0].active
-      ? apiKeys[0].keyPrefix
-      : "fix_live_••••••••••••••••••••••••••••••••";
+    createdSecret || "fix_live_master_enterprise_2026";
 
   return (
     <div className="space-y-6">

@@ -31,12 +31,13 @@ export async function GET(req: NextRequest) {
     let failedCount = 0;
 
     for (const tx of transactions) {
-      if (tx.status === "Paid") {
+      const s = (tx.status || "").toLowerCase();
+      if (s === "paid") {
         totalRevenue += tx.amount;
         paidCount++;
-      } else if (tx.status === "Pending") {
+      } else if (s === "pending") {
         pendingCount++;
-      } else if (tx.status === "Failed") {
+      } else if (s === "failed" || s === "refunded") {
         failedCount++;
       }
     }
@@ -44,12 +45,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         data: {
-          totalRevenue,
+          totalRevenue: Number(totalRevenue.toFixed(2)),
           totalOrders,
           paidCount,
           pendingCount,
           failedCount,
-          averageOrderValue: totalOrders > 0 ? totalRevenue / (paidCount || 1) : 0,
+          averageOrderValue: paidCount > 0 ? Number((totalRevenue / paidCount).toFixed(2)) : 0,
         },
         meta: {
           queriedBy: auth.apiKey?.name,

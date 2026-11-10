@@ -9,7 +9,18 @@ const CreateOrderSchema = z.object({
   customerName: z.string().min(2, "Customer name must be at least 2 characters"),
   customerEmail: z.string().email("Invalid customer email address"),
   amount: z.number().positive("Amount must be greater than zero"),
-  status: z.enum(["Paid", "Pending", "Failed"]).default("Pending"),
+  status: z
+    .string()
+    .transform((val) => {
+      const lower = val.toLowerCase();
+      if (lower === "paid") return "Paid";
+      if (lower === "pending") return "Pending";
+      if (lower === "refunded") return "Refunded";
+      if (lower === "failed") return "Failed";
+      return val;
+    })
+    .pipe(z.enum(["Paid", "Pending", "Failed", "Refunded"]))
+    .default("Pending"),
   itemsCount: z.number().int().positive().default(1),
   method: z.string().default("Credit Card"),
   note: z.string().optional(),
@@ -34,7 +45,30 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const { searchParams } = new URL(req.url);
+    const statusParam = searchParams.get("status");
+    const searchParam = searchParams.get("search");
+    const limitParam = searchParams.get("limit");
+
+    const take = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 50, 1), 100) : undefined;
+
+    const where: Record<string, unknown> = {};
+    if (statusParam) {
+      const normalizedStatus =
+        statusParam.charAt(0).toUpperCase() + statusParam.slice(1).toLowerCase();
+      where.status = normalizedStatus;
+    }
+
+    if (searchParam) {
+      where.OR = [
+        { customerName: { contains: searchParam } },
+        { customerEmail: { contains: searchParam } },
+      ];
+    }
+
     const orders = await prisma.transaction.findMany({
+      where,
+      take,
       orderBy: { createdAt: "desc" },
     });
 

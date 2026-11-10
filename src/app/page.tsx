@@ -45,8 +45,8 @@ const INITIAL_API_KEYS: ApiKeyRecord[] = [
   {
     id: "key-prod-01",
     name: "Enterprise ERP Ingestion Key",
-    keyPrefix: "fix_live_9f8a...4b12",
-    keyHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    keyPrefix: "fix_live_mast...2026",
+    keyHash: "b99005498d44b4ea0f340be48dbc4771ac11c9e96d83d23952cf3237f37d1afb",
     permissions: ["read:orders", "write:orders", "read:analytics"],
     createdAt: "2026-11-09",
     lastUsed: "2026-11-10T02:15:00.000Z",
@@ -169,6 +169,26 @@ export default function FixentraApp() {
       if (storedProfile) {
         setUserProfile(JSON.parse(storedProfile));
       }
+
+      const storedTx = localStorage.getItem("fixentra_transactions");
+      if (storedTx) {
+        try {
+          const parsed = JSON.parse(storedTx);
+          if (Array.isArray(parsed) && parsed.length > 0) setTransactions(parsed);
+        } catch {
+          // ignore
+        }
+      }
+
+      const storedProds = localStorage.getItem("fixentra_products");
+      if (storedProds) {
+        try {
+          const parsed = JSON.parse(storedProds);
+          if (Array.isArray(parsed) && parsed.length > 0) setProducts(parsed);
+        } catch {
+          // ignore
+        }
+      }
     } catch {
       // ignore parse errors
     }
@@ -231,9 +251,15 @@ export default function FixentraApp() {
 
   // Status mutation
   const handleStatusChange = (id: string, newStatus: TransactionStatus) => {
-    setTransactions((prev) =>
-      prev.map((tx) => (tx.id === id ? { ...tx, status: newStatus } : tx))
-    );
+    setTransactions((prev) => {
+      const next = prev.map((tx) => (tx.id === id ? { ...tx, status: newStatus } : tx));
+      try {
+        localStorage.setItem("fixentra_transactions", JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
 
     if (selectedTransaction && selectedTransaction.id === id) {
       setSelectedTransaction((prev) => (prev ? { ...prev, status: newStatus } : null));
@@ -250,7 +276,15 @@ export default function FixentraApp() {
   // Delete transaction
   const handleDeleteOrder = (id: string) => {
     const deletedOrder = transactions.find((t) => t.id === id);
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    setTransactions((prev) => {
+      const next = prev.filter((t) => t.id !== id);
+      try {
+        localStorage.setItem("fixentra_transactions", JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
 
     if (selectedTransaction?.id === id) {
       setSheetOpen(false);
@@ -271,7 +305,15 @@ export default function FixentraApp() {
 
   // Create new order
   const handleCreateOrder = (newOrder: Transaction) => {
-    setTransactions((prev) => [newOrder, ...prev]);
+    setTransactions((prev) => {
+      const next = [newOrder, ...prev];
+      try {
+        localStorage.setItem("fixentra_transactions", JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
 
     setKpis((prev) =>
       prev.map((kpi) => {
@@ -304,7 +346,15 @@ export default function FixentraApp() {
 
   // Add Product Tier
   const handleAddProduct = (newProd: ProductTier) => {
-    setProducts((prev) => [newProd, ...prev]);
+    setProducts((prev) => {
+      const next = [newProd, ...prev];
+      try {
+        localStorage.setItem("fixentra_products", JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
     setAuditLogs((prev) => [
       createAuditEntry("PRODUCT_CREATED", `Catalog tier ${newProd.title} (${newProd.sku}) created at $${newProd.price}`, currentUser),
       ...prev,
@@ -313,9 +363,15 @@ export default function FixentraApp() {
 
   // Toggle Product Status
   const handleToggleProductStatus = (id: string) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p))
-    );
+    setProducts((prev) => {
+      const next = prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p));
+      try {
+        localStorage.setItem("fixentra_products", JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
     setAuditLogs((prev) => [
       createAuditEntry("PRODUCT_STATUS_CHANGED", `Catalog state altered for ${id}`, currentUser),
       ...prev,
@@ -539,6 +595,12 @@ export default function FixentraApp() {
     setTransactions(INITIAL_TRANSACTIONS);
     setProducts(INITIAL_PRODUCTS);
     setKpis(INITIAL_KPIS);
+    try {
+      localStorage.removeItem("fixentra_transactions");
+      localStorage.removeItem("fixentra_products");
+    } catch {
+      // ignore
+    }
     setAuditLogs((prev) => [
       createAuditEntry("LEDGER_RESYNC", "Verified SQLite persistence and refreshed transactional indices", currentUser),
       ...prev,
@@ -575,7 +637,15 @@ export default function FixentraApp() {
       case "analytics":
         return <AnalyticsView />;
       case "customers":
-        return <CustomersView transactions={transactions} />;
+        return (
+          <CustomersView
+            transactions={transactions}
+            onSelectCustomerOrders={(email) => {
+              setActiveSection("orders");
+              toast.info(`Viewing orders for ${email}`);
+            }}
+          />
+        );
       case "developers":
         return (
           <DeveloperPortal

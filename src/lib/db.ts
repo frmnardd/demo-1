@@ -145,8 +145,8 @@ export async function ensureDatabaseSeeded(): Promise<void> {
       await prisma.apiKey.create({
         data: {
           name: "Enterprise ERP Ingestion Key",
-          keyPrefix: "fix_live_9f8a...4b12",
-          keyHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          keyPrefix: "fix_live_mast...2026",
+          keyHash: "b99005498d44b4ea0f340be48dbc4771ac11c9e96d83d23952cf3237f37d1afb",
           permissions: JSON.stringify(["read:orders", "write:orders", "read:analytics"]),
           active: true,
           lastUsed: new Date(),

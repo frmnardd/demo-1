@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, Users, Mail, ShoppingBag, DollarSign, Calendar, Sparkles } from "lucide-react";
+import { Search, Users, Mail, ShoppingBag, DollarSign, Calendar, Sparkles, ArrowRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,7 +23,7 @@ interface CustomersViewProps {
   onSelectCustomerOrders?: (email: string) => void;
 }
 
-export function CustomersView({ transactions }: CustomersViewProps) {
+export function CustomersView({ transactions, onSelectCustomerOrders }: CustomersViewProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const customers = React.useMemo(() => deriveCustomerDirectory(transactions), [transactions]);
 
@@ -117,6 +118,7 @@ export function CustomersView({ transactions }: CustomersViewProps) {
                   <TableHead className="text-center">Total Orders</TableHead>
                   <TableHead>Last Order Date</TableHead>
                   <TableHead className="text-right">Total Spent</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -155,11 +157,24 @@ export function CustomersView({ transactions }: CustomersViewProps) {
                       <TableCell className="text-right font-semibold font-mono text-foreground">
                         ${client.totalSpent.toFixed(2)}
                       </TableCell>
+                      <TableCell className="text-right">
+                        {onSelectCustomerOrders && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onSelectCustomerOrders(client.email)}
+                            className="h-7 text-xs gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                          >
+                            <ShoppingBag className="h-3 w-3" />
+                            Orders
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-28 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={6} className="h-28 text-center text-sm text-muted-foreground">
                       No customers found matching &quot;{searchQuery}&quot;
                     </TableCell>
                   </TableRow>
