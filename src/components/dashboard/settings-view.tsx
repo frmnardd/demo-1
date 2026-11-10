@@ -328,10 +328,10 @@ export function SettingsView({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b pb-1">
+      <div className="flex items-center gap-1.5 overflow-x-auto border-b pb-2 whitespace-nowrap">
         <button
           onClick={() => setActiveTab("profile")}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-medium transition-all shrink-0 ${
             activeTab === "profile"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -342,7 +342,7 @@ export function SettingsView({
         </button>
         <button
           onClick={() => setActiveTab("security")}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-medium transition-all shrink-0 ${
             activeTab === "security"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -353,7 +353,7 @@ export function SettingsView({
         </button>
         <button
           onClick={() => setActiveTab("workspace")}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-medium transition-all shrink-0 ${
             activeTab === "workspace"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -364,7 +364,7 @@ export function SettingsView({
         </button>
         <button
           onClick={() => setActiveTab("notifications")}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-medium transition-all shrink-0 ${
             activeTab === "notifications"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -375,7 +375,7 @@ export function SettingsView({
         </button>
         <button
           onClick={() => setActiveTab("database")}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-medium transition-all shrink-0 ${
             activeTab === "database"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"

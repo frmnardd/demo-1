@@ -115,8 +115,8 @@ export function CustomersView({ transactions, onSelectCustomerOrders }: Customer
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
                   <TableHead>Customer</TableHead>
                   <TableHead>Account Status</TableHead>
-                  <TableHead className="text-center">Total Orders</TableHead>
-                  <TableHead>Last Order Date</TableHead>
+                  <TableHead className="text-center hidden md:table-cell">Total Orders</TableHead>
+                  <TableHead className="hidden sm:table-cell">Last Order Date</TableHead>
                   <TableHead className="text-right">Total Spent</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
@@ -126,16 +126,19 @@ export function CustomersView({ transactions, onSelectCustomerOrders }: Customer
                   filtered.map((client) => (
                     <TableRow key={client.email} className="hover:bg-muted/50">
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>{client.avatar}</AvatarFallback>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0">
+                            <AvatarFallback className="text-[10px] sm:text-xs">{client.avatar}</AvatarFallback>
                           </Avatar>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-foreground">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs sm:text-sm font-medium text-foreground truncate">
                               {client.name}
                             </span>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-[11px] sm:text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">
                               {client.email}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground sm:hidden mt-0.5">
+                              {client.totalOrders} ord &bull; {client.lastOrderDate}
                             </span>
                           </div>
                         </div>
@@ -143,18 +146,18 @@ export function CustomersView({ transactions, onSelectCustomerOrders }: Customer
                       <TableCell>
                         <Badge
                           variant={client.status === "VIP" ? "default" : "secondary"}
-                          className="text-[11px]"
+                          className="text-[10px] sm:text-[11px]"
                         >
                           {client.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center font-mono text-xs font-medium">
+                      <TableCell className="text-center font-mono text-xs font-medium hidden md:table-cell">
                         {client.totalOrders} order(s)
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
                         {client.lastOrderDate}
                       </TableCell>
-                      <TableCell className="text-right font-semibold font-mono text-foreground">
+                      <TableCell className="text-right font-semibold font-mono text-xs sm:text-sm text-foreground whitespace-nowrap">
                         ${client.totalSpent.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">

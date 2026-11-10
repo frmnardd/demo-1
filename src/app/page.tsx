@@ -5,6 +5,7 @@ import { Plus, Download, Sparkles, FileJson, Package, Activity, ShieldCheck, Ter
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { ChartsSection } from "@/components/dashboard/charts-section";
 import { OrdersTable } from "@/components/dashboard/orders-table";
@@ -826,28 +827,31 @@ export default function FixentraApp() {
           }
         />
 
-        <main className="flex-1 space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 space-y-6 p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 md:pb-8">
           {/* Top Banner & Quick Actions */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl flex items-center gap-2">
-                Fixentra Enterprise
-                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground lg:text-3xl">
+                  Fixentra Enterprise
+                </h2>
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary border border-primary/20">
                   <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  v3.5 Production Fortress
+                  v3.5 Fortress
                 </span>
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Zero-Trust Persistence, REST API Gateway & Webhooks on <span className="font-mono text-xs text-primary font-medium">fixentra.my.id</span>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Zero-Trust Persistence, REST API Gateway & Webhooks on{" "}
+                <span className="font-mono text-xs text-primary font-medium">fixentra.my.id</span>
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleExportCSV}
-                className="gap-1.5 text-xs shadow-sm"
+                className="gap-1.5 text-xs shadow-sm shrink-0"
               >
                 <Download className="h-3.5 w-3.5" />
                 Export CSV
@@ -856,7 +860,7 @@ export default function FixentraApp() {
                 variant="outline"
                 size="sm"
                 onClick={handleExportJSON}
-                className="gap-1.5 text-xs shadow-sm"
+                className="gap-1.5 text-xs shadow-sm shrink-0"
               >
                 <FileJson className="h-3.5 w-3.5" />
                 Export JSON
@@ -864,7 +868,7 @@ export default function FixentraApp() {
               <Button
                 size="sm"
                 onClick={() => setNewOrderDialogOpen(true)}
-                className="gap-1.5 text-xs shadow-sm"
+                className="gap-1.5 text-xs shadow-sm shrink-0 bg-primary text-primary-foreground font-semibold"
               >
                 <Plus className="h-4 w-4" />
                 New Order
@@ -916,6 +920,17 @@ export default function FixentraApp() {
           setActiveSection(sectionId);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
+      />
+
+      {/* Mobile Sticky Bottom Navigation Bar */}
+      <MobileBottomNav
+        activeSection={activeSection}
+        onSelectSection={(sectionId) => {
+          setActiveSection(sectionId);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onOpenCopilot={() => setCopilotOpen(true)}
+        unreadOrderCount={transactions.filter((t) => (t.status || "").toLowerCase() === "pending").length}
       />
     </div>
   );

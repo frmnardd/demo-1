@@ -154,9 +154,9 @@ export function OrdersTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="w-[120px]">Order ID</TableHead>
+              <TableHead className="w-[85px] sm:w-[120px]">Order ID</TableHead>
               <TableHead>Customer</TableHead>
-              <TableHead>
+              <TableHead className="hidden md:table-cell">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -178,9 +178,9 @@ export function OrdersTable({
                   <ArrowUpDown className="ml-1 h-3 w-3" />
                 </Button>
               </TableHead>
-              <TableHead>Payment Method</TableHead>
+              <TableHead className="hidden lg:table-cell">Payment Method</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[60px] text-right">Actions</TableHead>
+              <TableHead className="w-[50px] sm:w-[60px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -191,34 +191,37 @@ export function OrdersTable({
                   onClick={() => onSelectTransaction(tx)}
                   className="cursor-pointer transition-colors hover:bg-muted/50"
                 >
-                  <TableCell className="font-mono text-xs font-semibold text-primary">
+                  <TableCell className="font-mono text-[11px] sm:text-xs font-semibold text-primary whitespace-nowrap">
                     {tx.id}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{tx.customer.avatar}</AvatarFallback>
+                  <TableCell className="max-w-[140px] sm:max-w-none">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0">
+                        <AvatarFallback className="text-[10px] sm:text-xs">{tx.customer.avatar}</AvatarFallback>
                       </Avatar>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium leading-none text-foreground">
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs sm:text-sm font-medium leading-none text-foreground truncate">
                           {tx.customer.name}
                         </span>
-                        <span className="text-xs text-muted-foreground mt-1">
+                        <span className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 truncate hidden sm:inline">
                           {tx.customer.email}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground mt-0.5 md:hidden">
+                          {tx.date}
                         </span>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                     {tx.date}
                   </TableCell>
-                  <TableCell className="font-medium text-foreground">
+                  <TableCell className="font-semibold text-xs sm:text-sm text-foreground whitespace-nowrap">
                     ${tx.amount.toFixed(2)}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
                     {tx.method}
                   </TableCell>
-                  <TableCell>{getStatusBadge(tx.status)}</TableCell>
+                  <TableCell className="whitespace-nowrap">{getStatusBadge(tx.status)}</TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

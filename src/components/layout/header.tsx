@@ -63,56 +63,57 @@ export function Header({
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/80 backdrop-blur-md px-4 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-14 sm:h-16 w-full items-center justify-between border-b bg-background/80 backdrop-blur-md px-3 sm:px-6">
       {/* Left: Mobile Menu Toggle & Title */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggleMobileSidebar}
-          className="md:hidden h-9 w-9"
+          className="md:hidden h-8 w-8 sm:h-9 sm:w-9 shrink-0"
           aria-label="Open navigation sidebar"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <span className="text-xs text-muted-foreground hidden sm:inline">
             Dashboard
           </span>
           <span className="text-xs text-muted-foreground hidden sm:inline">/</span>
-          <h1 className="text-sm font-semibold capitalize text-foreground sm:text-base">
+          <h1 className="text-xs sm:text-base font-semibold capitalize text-foreground truncate">
             {activeSectionTitle}
           </h1>
         </div>
       </div>
 
       {/* Right Controls: Search Trigger, Notifications, Theme, Profile */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Fixentra AI Copilot Button */}
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* Fixentra AI Copilot Button (desktop / tablet) */}
         {onOpenCopilot && (
           <Button
             variant="outline"
             size="sm"
             onClick={onOpenCopilot}
-            className="h-9 gap-1.5 border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground text-xs font-medium shadow-sm transition-all"
+            className="hidden sm:flex h-8 sm:h-9 px-2 sm:px-3 gap-1.5 border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground text-xs font-medium shadow-sm transition-all"
           >
             <Sparkles className="h-3.5 w-3.5 text-primary" />
             <span className="hidden lg:inline">Fixentra AI</span>
-            <kbd className="hidden sm:inline-flex pointer-events-none h-4 select-none items-center rounded border bg-background/50 px-1 font-mono text-[9px] text-muted-foreground">
+            <kbd className="hidden md:inline-flex pointer-events-none h-4 select-none items-center rounded border bg-background/50 px-1 font-mono text-[9px] text-muted-foreground">
               ⌘J
             </kbd>
           </Button>
         )}
 
-        {/* Search trigger button */}
+        {/* Search trigger button (compact icon on mobile, expanded on desktop) */}
         <button
           onClick={onOpenCommandPalette}
-          className="flex h-9 w-36 sm:w-56 items-center justify-between rounded-md border border-input bg-muted/40 px-3 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          className="flex h-8 sm:h-9 w-8 sm:w-44 md:w-56 items-center justify-center sm:justify-between rounded-md border border-input bg-muted/40 sm:px-3 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          aria-label="Search and command palette"
         >
           <div className="flex items-center gap-2 truncate">
             <Search className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">Search...</span>
+            <span className="hidden sm:inline truncate">Search...</span>
           </div>
           <kbd className="hidden sm:inline-flex pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
             <span className="text-xs">⌘</span>K
@@ -125,18 +126,18 @@ export function Header({
             <Button
               variant="ghost"
               size="icon"
-              className="relative h-9 w-9"
+              className="relative h-8 w-8 sm:h-9 sm:w-9"
               aria-label="View notifications"
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                <span className="absolute top-1 right-1 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-primary text-[9px] sm:text-[10px] font-bold text-primary-foreground">
                   {unreadCount}
                 </span>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 max-w-sm">
             <DropdownMenuLabel className="flex items-center justify-between">
               <span>Notifications</span>
               {unreadCount > 0 ? (
@@ -201,10 +202,10 @@ export function Header({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="relative h-9 w-9 rounded-full p-0"
+              className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0"
               aria-label="User account menu"
             >
-              <Avatar className="h-9 w-9 border border-primary/20">
+              <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-primary/20">
                 <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-xs">
                   {initials}
                 </AvatarFallback>
