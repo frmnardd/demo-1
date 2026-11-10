@@ -30,6 +30,13 @@ export function validateOrderInput(input: {
     errors.name = "Customer name is required";
   }
 
+  if (input.customer?.email && input.customer.email.trim().length > 0) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(input.customer.email.trim())) {
+      errors.email = "Please provide a valid corporate email address";
+    }
+  }
+
   if (input.amount === undefined || input.amount === null || isNaN(input.amount) || input.amount <= 0) {
     errors.amount = "Amount must be a positive number";
   }
@@ -150,8 +157,14 @@ export function CreateOrderDialog({
                 type="email"
                 placeholder="e.g. jane@acme.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                }}
               />
+              {errors.email && (
+                <p className="text-xs text-destructive">{errors.email}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

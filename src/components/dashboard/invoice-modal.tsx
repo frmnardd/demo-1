@@ -16,8 +16,8 @@ export function InvoiceContent({ transaction, onPrint }: InvoiceContentProps) {
   const invoiceNo = `INV-FIX-${transaction.id.replace(/[^0-9]/g, "").padStart(5, "0") || "10042"}`;
   const subtotal = transaction.amount / 1.11;
   const tax = transaction.amount - subtotal;
-  const isPaid = transaction.status === "paid";
-  const isPending = transaction.status === "pending";
+  const isPaid = (transaction.status || "").toLowerCase() === "paid";
+  const isPending = (transaction.status || "").toLowerCase() === "pending";
 
   return (
     <div className="p-8 space-y-6 bg-card text-foreground print:p-0">

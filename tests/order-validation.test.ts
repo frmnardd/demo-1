@@ -20,4 +20,13 @@ describe("validateOrderInput", () => {
     expect(result.valid).toBe(true);
     expect(Object.keys(result.errors)).toHaveLength(0);
   });
+
+  it("rejects malformed email format when provided", () => {
+    const result = validateOrderInput({
+      customer: { name: "John Doe", email: "invalid-email-format", avatar: "" },
+      amount: 150,
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.email).toBeDefined();
+  });
 });

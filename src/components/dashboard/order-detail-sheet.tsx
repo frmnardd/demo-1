@@ -54,9 +54,9 @@ export function OrderDetailSheet({
               </span>
               <Badge
                 variant={
-                  transaction.status === "paid"
+                  (transaction.status || "").toLowerCase() === "paid"
                     ? "success"
-                    : transaction.status === "refunded"
+                    : (transaction.status || "").toLowerCase() === "refunded"
                     ? "destructive"
                     : "secondary"
                 }
@@ -151,7 +151,7 @@ export function OrderDetailSheet({
           )}
 
           <div className="grid grid-cols-2 gap-2 w-full">
-            {transaction.status !== "paid" && (
+            {(transaction.status || "").toLowerCase() !== "paid" && (
               <Button
                 variant="default"
                 size="sm"
@@ -162,7 +162,7 @@ export function OrderDetailSheet({
                 Mark Paid
               </Button>
             )}
-            {transaction.status !== "refunded" && (
+            {(transaction.status || "").toLowerCase() !== "refunded" && (
               <Button
                 variant="destructive"
                 size="sm"

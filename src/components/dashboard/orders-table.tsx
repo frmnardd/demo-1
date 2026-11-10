@@ -66,10 +66,12 @@ export function OrdersTable({
   }, [transactions, searchQuery, statusFilter, sortField, sortDirection]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
   const paginatedTransactions = React.useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
+    const start = (safeCurrentPage - 1) * itemsPerPage;
     return filtered.slice(start, start + itemsPerPage);
-  }, [filtered, currentPage]);
+  }, [filtered, safeCurrentPage]);
 
   const toggleSort = (field: keyof Transaction) => {
     if (sortField === field) {
@@ -80,14 +82,16 @@ export function OrdersTable({
     }
   };
 
-  const getStatusBadge = (status: TransactionStatus) => {
-    switch (status) {
+  const getStatusBadge = (status: string) => {
+    switch ((status || "").toLowerCase()) {
       case "paid":
         return <Badge variant="success">Paid</Badge>;
       case "pending":
         return <Badge variant="secondary" className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20">Pending</Badge>;
       case "refunded":
         return <Badge variant="destructive">Refunded</Badge>;
+      case "failed":
+        return <Badge variant="destructive">Failed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -303,20 +307,20 @@ export function OrdersTable({
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
+            disabled={safeCurrentPage <= 1}
             className="h-8 gap-1 text-xs"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
             Previous
           </Button>
           <span className="font-medium">
-            Page {currentPage} of {totalPages}
+            Page {safeCurrentPage} of {totalPages}
           </span>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage >= totalPages}
+            disabled={safeCurrentPage >= totalPages}
             className="h-8 gap-1 text-xs"
           >
             Next

@@ -345,6 +345,13 @@ export function sortTransactions(
   direction: "asc" | "desc"
 ): Transaction[] {
   return [...transactions].sort((a, b) => {
+    if (field === "customer") {
+      const aName = a.customer?.name || "";
+      const bName = b.customer?.name || "";
+      const comparison = aName.localeCompare(bName);
+      return direction === "asc" ? comparison : -comparison;
+    }
+
     const aVal = a[field];
     const bVal = b[field];
 

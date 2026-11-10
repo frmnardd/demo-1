@@ -31,4 +31,14 @@ describe("Mock Data Helpers", () => {
     const desc = sortTransactions(sampleData, "amount", "desc");
     expect(desc[0].amount).toBe(480);
   });
+
+  it("sorts transactions by customer name correctly", () => {
+    const asc = sortTransactions(sampleData, "customer", "asc");
+    expect(asc[0].customer.name).toBe("Alice Smith");
+    expect(asc[2].customer.name).toBe("Charlie Brown");
+
+    const desc = sortTransactions(sampleData, "customer", "desc");
+    expect(desc[0].customer.name).toBe("Charlie Brown");
+    expect(desc[2].customer.name).toBe("Alice Smith");
+  });
 });

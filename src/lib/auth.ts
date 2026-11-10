@@ -38,16 +38,32 @@ export function authenticateUser(
   }
 
   // Check default enterprise administrator
-  if (cleanUser === "ardfrmn" && verifyPassword(cleanPass, ADMIN_HASH)) {
-    return {
-      success: true,
-      user: {
-        username: "ardfrmn",
-        role: "SUPER_ADMIN",
-        name: "Firman Ardiansyah",
-        email: "firman@fixentra.my.id",
-      },
-    };
+  if (cleanUser === "ardfrmn") {
+    let activeAdminHash = ADMIN_HASH;
+    if (typeof window !== "undefined") {
+      try {
+        const customHash =
+          localStorage.getItem("fixentra_admin_password_hash") ||
+          localStorage.getItem("fixentra_pwd_ardfrmn");
+        if (customHash) {
+          activeAdminHash = customHash;
+        }
+      } catch {
+        // ignore storage error
+      }
+    }
+
+    if (verifyPassword(cleanPass, activeAdminHash)) {
+      return {
+        success: true,
+        user: {
+          username: "ardfrmn",
+          role: "SUPER_ADMIN",
+          name: "Firman Ardiansyah",
+          email: "firman@fixentra.my.id",
+        },
+      };
+    }
   }
 
   // Check provisioned team members in browser storage if available
